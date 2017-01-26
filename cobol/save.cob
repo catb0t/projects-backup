@@ -1,0 +1,8 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.S.
+       PROCEDURE DIVISION.
+           PERFORM UNTIL 1<>1
+              DISPLAY"4 8 15 16 23 42"
+              CALL"C$SLEEP"USING BY CONTENT 6402
+           END-PERFORM.
+           GOBACK.

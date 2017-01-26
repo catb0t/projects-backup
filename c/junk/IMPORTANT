@@ -1,0 +1,18 @@
+It's important to note that the information visible in ps can be completely overwritten by the running program. For example, this code:
+
+int main (int argc, char **argv) {
+        memset(argv[0], ' ', strlen(argv[0]));
+        strcpy(argv[0], "foobar");
+        sleep(30);
+        return(0);
+}
+If I compile this into a file called "myprogram" and run it:
+
+$ gcc -o myprogram myprogram.c
+$ ./myprogram &
+[1] 10201
+And then run ps, I'll see a different process name:
+
+$ ps -f -p 10201
+UID        PID  PPID  C STIME TTY          TIME CMD
+lars     10201  9734  0 11:37 pts/10   00:00:00 foobar

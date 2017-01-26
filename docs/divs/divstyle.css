@@ -1,0 +1,43 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing:border-box;
+}
+
+.container {
+	width: 1140px;
+	height: 600px;
+	background-color: #222;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.left {
+	width: 75%;
+	height: 100%;
+	background-color: #555;
+	float: left;
+}
+
+.box {
+	width: 20%;
+	height: 20%;
+	background-color: #FF00FF;
+	margin-bottom: 20px;
+	margin-right: 10px;
+	margin-left: 10px;
+	float: left;
+	border-radius: 25%;
+}
+
+.right {
+	width: 25%;
+	height: 100%;
+	background-color: #888;
+	float: left;
+}
+
+.right .box {
+	background-color: #FFF;
+	border-radius: 50%;
+}

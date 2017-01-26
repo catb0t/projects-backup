@@ -1,0 +1,138 @@
+// ****************************************************************************
+// ****************************************************************************
+// Chars
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Chars are implemented as integers
+// ****************************************************************************
+'\t' const: HTAB
+'\n' const: LF
+'\r' const: CR
+' '  const: BL
+127  const: DEL
+
+// ****************************************************************************
+// isControl            ( c -- b )
+//    Return true if c is a control char
+Integer method: isControl -- b
+   self BL < self DEL &= or ;
+
+// ****************************************************************************
+// isLwSpace            ( c -- b )
+//    Return true if the receiver is BL ou HTAB
+Integer method: isLwSpace -- b
+   self BL &= self HTAB &= or ;
+
+// ****************************************************************************
+// isSeparator          ( c -- b )
+//    Return true if the receiver is a separator
+Integer method: isSeparator -- b
+   self isLwSpace ifTrue: [ true return ]
+   self LF &= ;
+
+// ****************************************************************************
+// isUpper/isLower      ( n -- b )
+//    Return true if the receiver is an upper or lower char
+Integer method: isUpper -- b
+   self between('a', 'z') not ;
+
+Integer method: isLower -- b
+   self between('A', 'Z') not ;
+
+// ****************************************************************************
+// toUpper/toLower
+//    Return upper/lower char of the receiver
+Integer method: toUpper -- c
+   self dup isUpper ifFalse: [ BL - ] ;
+
+Integer method: toLower -- c
+   self dup isLower ifFalse: [ BL + ] ;
+
+// ****************************************************************************
+// isDigit/isLetter/isAlpha  ( n -- true | false )
+//    Return true ther receiver is a letter or a digit
+Integer method: isDigit -- b
+   self between('0', '9') ;
+
+Integer method: isLetter -- b
+   self isUpper not self isLower not or ;
+
+Integer method: isAlpha -- b
+   self isLetter self isDigit or ;
+
+// ****************************************************************************
+// asIntegerOfBase(aBase)    ( base c -- n )
+//		Return integer value of the receiver into aBase
+//		If the receiver is not a digit of aBase, return null.
+//		Example : 'b' asIntegerOfBase(16) -> 11
+Integer method: asIntegerOfBase(aBase) -- n
+	self toUpper dup isDigit ifTrue: [ '0' ] else: [ 10 + 'A' ] - 
+	dup between(0, aBase 1 - ) ifFalse: [ drop null ] ;
+
+// ****************************************************************************
+// asDigit                   ( c -- n )
+//    Return integer value of the receiver, null if not a digit
+//    Example '1' asDigit --> 1
+Integer method: asDigit -- n
+   10 self asIntegerOfBase ;
+
+// ****************************************************************************
+// asCharOfBase(aBase)       ( base n -- c )
+//    Return char representation of the receiver into base aBase
+//		Return null if the receiver is not between 0 and aBase
+Integer method: asCharOfBase  // base n -- c
+	1 - 0 self between
+      ifTrue: [ self dup 9 <= ifTrue: [ '0' ] else: [ 'A' 10 - ] + ]
+      else: [ null ] ;
+
+// ****************************************************************************
+// asChar                     ( n -- c )
+//    Return char representation of the receiver into base 10
+//    Return null if the receiver is not a digit
+//    Example : 1 asChar --> '1'
+Integer method: asChar -- c
+   10 self asCharOfBase ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Characters output
+// ****************************************************************************
+
+// ****************************************************************************
+// #<<c              ( aStream c -- aStream )
+//    Send a printable version of aChar to a stream
+Integer method: <<c 
+   self over addChar ;
+
+// ****************************************************************************
+// #<<cn(n)          ( aStream c -- aStream )
+//    Send n times a printable version of aChar to a stream
+Integer method: <<cn(n) 
+   | i | n loop: i [ self <<c ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ BL isSeparator ]
+test: ['a' toUpper 'A' == ]
+test: [ 'b' asIntegerOfBase(16) 11 == ]
+test: [ '4' asDigit 4 == ]
+test: [ 12 asCharOfBase(16) 'C' == ]
+test: [ 9 asChar '9' == ]
+
+// ****************************************************************************
+// End of chars
+// ****************************************************************************
+

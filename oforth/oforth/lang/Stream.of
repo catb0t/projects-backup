@@ -1,0 +1,95 @@
+// ****************************************************************************
+// ****************************************************************************
+// Stream property 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Stream is a property for objects that can be populated with 
+// formatted values. For instance :
+//    - File is a stream
+//    - BufferString is a stream
+
+// *****************************************************************************
+// Stream definition
+// *****************************************************************************
+Property new: Stream
+
+Stream requires: addChar
+Stream requires: addIntegerFormat
+Stream requires: addFloatFormat
+Stream requires: addBufferFormat
+
+0 const: Stream.JUSTIFY_LEFT
+1 const: Stream.JUSTIFY_RIGHT
+
+Method new: <<c
+
+// *****************************************************************************
+// addChar(aChar)    ( aChar aStream -- )
+//    Send aChar into aStream.
+
+// *****************************************************************************
+// addIntegerFormat(aInteger, aWidth, aJustif, aPrecis, aBase)
+//    Send aInteger into aStream.
+
+//    - aWidth is an integer that specify the width format :
+//       . If 0 or smaller than formatted integer size, ignored
+//       . If greater than formatted integer size, pad with spaces
+//         according to justify value.
+//
+//    - aJustif is used when width is greater that formatted integer
+//       . Possible values are : Stream.JUSTIFY_LEFT ou Stream.JUSTYF_RIGHT.
+//
+//    - aPrecis is precision used
+//       . If 0, ignored
+//       . Otherwise, specify the minimum numbers of digits to be written
+//         If formatted integer size is smaller, pad with 0.
+//
+//    - aBase is the base representation to be used
+//       . Possible values are 8, 10, 16
+//       . Default value (or if other value than 8, 10, 16 is specified) is 10.
+//
+
+// *****************************************************************************
+// addFloatFormat(aFloat, aWidth, aJustif, aPrecis)
+//    Send aFloat into aStream.
+
+//    - aWidth is an integer that specify the width format :
+//       . If 0 or smaller than formatted float size, ignored
+//       . If greater than formatted long size, pad with spaces
+//         according to justify value.
+//
+//    - aJustif is used when width is greater that formatted float
+//       . Possible values are : Stream.JUSTIFY_LEFT ou Stream.JUSTYF_RIGHT.
+//
+//    - aPrec is precision used
+//       . If 0, ignored
+//       . Otherwise, specify the numbers of significant digits to be written
+//
+
+// *****************************************************************************
+// addStringFormat(aString) 
+//    Send aString into aStream.
+
+// *****************************************************************************
+// cr             ( aStream -- )
+//    Send cr to the stream
+Stream virtual: cr 
+   System.ISWIN ifTrue: [ '\r' self addChar ]
+   '\n' self addChar ;
+
+//******************************************************************************
+// File has the Stream property
+File is: Stream
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// End of Stream property
+// *****************************************************************************
+

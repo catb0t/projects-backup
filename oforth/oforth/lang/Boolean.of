@@ -1,0 +1,118 @@
+// ****************************************************************************
+// ****************************************************************************
+// Booleans 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// ****************************************************************************
+// Booleans are implemented as integers
+// ****************************************************************************
+ 
+0 const: false
+1 const: true
+
+// ****************************************************************************
+// Booleans operations
+// ****************************************************************************
+
+// ****************************************************************************
+// &=			         ( x y -- b )
+//    Return true if the two objects on top of stack are the same object
+//    Example : Integer Integer &= -> true
+//    Example : 1.2 1.2 &=         -> false
+// Native function
+
+// ****************************************************************************
+// not			      ( b -- b )
+//    Define not operation for integers
+//    Example : true not       --> false
+Integer method: not -- b
+   self false &= ;
+
+// ****************************************************************************
+// and(b)	         ( b1 b2 -- b )
+//    Define and operation for integers
+//    Example : true false and --> false
+Integer method: and  // b1 b2 -- b
+   self ifFalse: [ drop false ] ;
+
+// ****************************************************************************
+// or(b)		         ( b1 b2 -- b )
+//    Define or operation for integers
+//    Example : true false or  --> true  
+Integer method: or   // b1 b2 -- b
+   self ifTrue: [ drop true ] ;
+
+// ****************************************************************************
+// xor(aBoolean)	   ( b1 b2 -- b )
+//    Define xor operation for integers
+//    Example : true true xor  --> false
+Integer method: xor  // b1 b2 -- b
+   self ifTrue: [ not ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Related definitions 
+// ****************************************************************************
+
+// ****************************************************************************
+// ==, <>            ( x y -- b )
+//    Return true if the two objects on top of stack have the same value
+//    Defaut behavior is to check if they are the same object
+//    This method can be redefined if necessary.
+//    Example : 1.2 1.2 == -> true
+Object virtual: ==   // x y -- b
+   self &= ;
+
+: <>                 // x y -- b
+   == not ;
+
+// ****************************************************************************
+// clr 
+//    Remove all objects from the stack
+: clr
+   while( .depth ) [ drop ] ;
+
+// ****************************************************************************
+// ifZero: 
+//    Declared as an alias of ifFalse:
+#ifFalse: alias: ifZero:
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ true true == ]
+test: [ true false <> ]
+
+test: [ false not ]
+test: [ true  not not ]
+
+test: [ true true   and ]
+test: [ true false  and not ]
+test: [ false true  and not ]
+test: [ false false and not ]
+
+test: [ true true   or ]
+test: [ true false  or ]
+test: [ false true  or ]
+test: [ false false or not ]
+
+test: [ true  true  xor not ]
+test: [ true  false xor ]
+test: [ false true  xor ]
+test: [ false false xor not ]
+
+
+// ****************************************************************************
+// End of Booleans
+// ****************************************************************************
+

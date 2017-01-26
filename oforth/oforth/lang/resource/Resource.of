@@ -1,0 +1,81 @@
+//******************************************************************************
+//******************************************************************************
+// Resource (Object->Resource)
+//******************************************************************************
+//******************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Resources are objects that can be shared between tasks.
+// like channels or sockets.
+
+// An immutable objet can be sent into a resource using #send
+// If the resource is empty, the task will wait until an object arrives.
+
+// A task can retrieve an objet using #receive
+// If the channel is full, the task will wait until an object is removed.
+
+0 const: Resource.RECEIVE
+1 const: Resource.SEND
+
+//******************************************************************************
+// Resource operations
+//******************************************************************************
+
+//******************************************************************************
+// select(aMode)
+//    Check if the resource is ready for aMode
+//    aMode is Resource.RECEIVE or Resource.SEND
+//    
+//    Return true if the resource est ready, false otherwise.
+//
+//    If Resource.RECEIVE, true means that something can be received from 
+//    from the resource, so the resource is not empty.
+//
+//    If Resource.SEND, true means that something can be sent to the resource
+//    so the resource is not full.
+//
+Resource virtual: select 
+   #select self subclassResponsability ;
+
+//******************************************************************************
+// isEmpty
+//    Return true is resource is empty, false otherwise
+Resource method: isEmpty -- b 
+   self select(Resource.RECEIVE) not ;
+
+//******************************************************************************
+// isFull
+//    Return true is resource is full, false otherwise
+Resource method: isFull -- b
+   self select(Resource.SEND) not ;
+
+//******************************************************************************
+// isOpen -- b
+//    Return true if the resource has been closed, false otherwise
+// Native method
+
+//******************************************************************************
+// close
+//    Close the resource.
+//
+//    When closing a resource : 
+//       - Each task waiting for the resource receives a timeout 
+//
+//       - Tasks waiting for a receive will receive null.
+//       - Tasks waiting for a send will receive false.
+//
+//       - Tasks waiting with a timeout can use isClosed on the resource
+//         to check if the response is from their tiemout or because the
+//         resource has been closed.
+// Native method
+
+//******************************************************************************
+
+
+//******************************************************************************
+// End of Resource class
+//******************************************************************************
+

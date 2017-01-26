@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <title>LispyScript Browser Example</title>
+
+        <!--<script type="text/javascript" src="./jquery-2.2.3.min.js"></script>-->
+
+        <script type="text/javascript" src="./browser-bundle.js"></script>
+
+        <script type="text/lispyscript" id="square" src="./square.ls"></script>
+
+        <script type="text/lispyscript" id="main">
+
+            (var square (require "square")) (alert (square 2)) (alert (square 20000))
+
+        </script>
+
+    </head>
+
+    <body>
+        <div>
+            <h1>LispyScript Browser Example</h1>
+        </div>
+    </body>
+
+</html>

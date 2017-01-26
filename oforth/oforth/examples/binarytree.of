@@ -1,0 +1,46 @@
+// The Computer Language Benchmarks Game
+// http://benchmarksgame.alioth.debian.org/
+
+// contributed by Franck Bensusan
+
+// To use 1 worker   : oforth --W1 --P"binarytree(20)" binarytree.of
+// To use 4 workers  : oforth --W4 --P"binarytree(20)" binarytree.of
+// To use alls cores : oforth --P"binarytree(20)" binarytree.of
+// To use 9 workers  : oforth --W9 --P"binarytree(20)" binarytree.of
+//
+Object Class new: TreeNode(item, l, r)
+
+TreeNode method: initialize   // ( rnode lnode item -- )
+   := item := l := r ;
+
+TreeNode method: check        // ( aTreeNode -- n )
+   @item @l ifNotNull: [ @l check + @r check - ] ;
+
+: bottomUp(item, depth) -- aTreeNode 
+   depth ifZero: [ null null ]
+           else: [ depth 1 - item dup + over over bottomUp tor 1 - bottomUp ]
+   item TreeNode new;
+
+: printTree(n, depth, v) 
+   System.Out n << depth << "\t check: " << v << cr ;
+
+: gentrees(dep, it)           // ( n depth -- aBlock )
+| res i |
+   0 it loop: i [ bottomUp(i, dep) check + bottomUp(0 i -, dep) check + ] ->res
+   #[ printTree(it 2 * "\t trees of depth " + , dep, res) ];
+
+: binarytree(N)               // ( N -- )
+| depth minDepth maxDepth stretch longLived |
+
+   4 dup ->minDepth 2 + N max dup ->maxDepth 1 + ->stretch
+   printTree("stretch tree of depth ", stretch, bottomUp(0, stretch) check)
+
+   bottomUp(0, maxDepth) ->longLived
+
+   ListBuffer new 
+   minDepth maxDepth 2 step: depth 
+      [ #[ gentrees(depth, 1 bitLeft(maxDepth depth - minDepth +)) ] over add ]
+   mapParallel(#perform) apply(#perform)
+
+   printTree("long lived tree of depth ", maxDepth, longLived check);
+

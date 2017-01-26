@@ -1,0 +1,50 @@
+// *****************************************************************************
+// *****************************************************************************
+// PING PONG
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+// This example : 
+//    1) Creates 2 channels : pingChannel and pongChannel.
+
+//    2) Creates a task that will run #pong function.
+//       This function waits for n message on the pingChannel.
+//       When a message arrives, pong resend it on the pongChannel.
+//       This function will block and wait on #receive until a message arrives
+//       This function could also block and wait on #send if the pong channel is full
+//       but, in this case, of course, this will never happen.
+
+//    3) The main task will send n messages on the pingChannel and wait
+//       the return from pong on the pongChannel.
+
+// Usage : pingpong(n) with n the number of messages to send and receive.
+//       : Also try "#[ pingpong(n) ] &" and use .w before the end.
+//
+// By the way, Oforth allows nested blocks :
+// For instance : #[ #[ pingpong(n) ] bench ] &
+//    - Launch a new parallel task that will run block #[ #[ pingpong(n) ] bench ]
+//    - This block, when performed, will run pingpong(n) and bench it.
+//    - pingpong(n) will also launch a new parallel task that will run #pong
+
+: pong(n, pingCh, pongCh) 
+{ 
+| i | 
+   n loop: i [ pongCh send(pingCh receive) drop ]    // Loop : for(i = 1; i <= n; i++)
+}                                                   // send received object
+
+: pingpong(n)
+{
+| pingCh pongCh i |                                 // Declare 3 local variables
+
+   Channel new ->pingCh                             // Creates a channel and store it
+   Channel new ->pongCh                             // Creates a channel and store it
+   #[ pong(n, pingCh, pongCh) ] &                   // Creates a block and run it 
+                                                    // in a parallel task.
+   n loop: i [ pingCh send(i) drop pongCh receive drop ] 
+}
+// *****************************************************************************
+

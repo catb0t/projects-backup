@@ -1,0 +1,532 @@
+// ****************************************************************************
+// ****************************************************************************
+// ListBuffer (Object->Collection->List->ListBuffer)
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ***************************************************************************
+
+// ListBuffer implements a mutable lists
+// Elements are added to the list using #add
+// Elements are updated using #put
+
+// A ListBuffer object is a mutable object.
+// It can be changed to immutable object (a list) using #freeze, but only
+// if all elements are immutable.
+
+// ListBuffer are used to compute maps.
+
+
+// ***************************************************************************
+// List Class new: ListBuffer
+
+
+// ****************************************************************************
+// ListBuffer creation
+// ****************************************************************************
+
+// ****************************************************************************
+// newSize(aInteger) -- aListBuffer
+//    Return new ListBuffer with aInteger as initial size allocated
+//    This method is used for optimization in order to avoid reallocations
+ListBuffer classMethod: newSize -- aListBuffer
+   super new ;
+
+// ****************************************************************************
+// new 
+//    Return new ListBuffer with default initial size
+ListBuffer classMethod: new -- aListBuffer
+   31 self newSize ;
+
+// ****************************************************************************
+// initValue(n, x)
+//    Creates a new ListBuffer and adds x n times
+ListBuffer classMethod: initValue(n, o) -- aListBuffer
+| i |
+   ListBuffer newSize(n) n loop: i [ o over add ] ;
+
+// ****************************************************************************
+// init(n, r)
+//    Creates a new ListBuffer with result of r performed n times
+ListBuffer classMethod: init(n, r) -- aListBuffer
+| i l |
+   ListBuffer newSize(n) ->l
+   n loop: i [ r perform l add ] l ;
+
+// ****************************************************************************
+// addAll(coll) 
+//    Add all elements of aCollection at the end of the receiver
+ListBuffer method: addAll(l) 
+   self #[ over add ] l apply drop ;
+
+// ****************************************************************************
+// asListBuffer
+//    Creates a new ListBuffer with all elements of a collection
+//    This will create a new ListBuffer, even if the receiver is a ListBuffer
+Collection virtual: asListBuffer -- aListBuffer
+   ListBuffer newSize(self size) dup addAll(self) ;
+
+// ****************************************************************************
+// asList
+//    Creates a new List from a ListBuffer
+ListBuffer method: asList -- aList
+   self asListBuffer dup freeze ;
+   
+// ****************************************************************************
+
+
+// ****************************************************************************
+// ListBuffer operations
+// ****************************************************************************
+
+// ****************************************************************************
+// put(n, x) 
+//    Put aObject at aInteger position (1 based)
+//    If the receive size is less than aInteger, complete with null value
+// Native method
+
+// ****************************************************************************
+// add(x)
+//    Add aObject at the end of the list
+//    Increase list allocated memory if necessary.
+// Native method
+
+// ****************************************************************************
+// removeAt(n) -- x
+//    Remove object at aInteger index and return it on the stack
+//    If object does not exist at this position, return null
+// Native Implement
+
+// ****************************************************************************
+// removeFirst -- x
+//    Remove first element of the list and return it on the stack
+//    If list is empty, return null
+ListBuffer method: removeFirst -- x
+   1 self removeAt ;
+
+// ****************************************************************************
+// removeLast
+//    Remove the last element of the list and put it on the stack
+//    If list is empty, return null
+ListBuffer method: removeLast -- x
+   self size self removeAt ;
+
+// ****************************************************************************
+// removeRange(i, j)
+//    Remove all elements from index i to index j
+//    Return a new list with all these removed elements
+ListBuffer method: removeRange(i, j) -- aList
+| nb k |
+   j i - 1 + dup ->nb ListBuffer newSize
+   nb loop: k [ i self removeAt over add ] dup freeze ;
+
+// ****************************************************************************
+// swapValues(i, j)
+//    Exchange object at index i with object at index j
+ListBuffer method: swapValues(i, j)
+   i self at j self at i self put j self put ;
+
+// ****************************************************************************
+// empty 
+//    Empty the list
+ListBuffer method: empty 
+   while ( self notEmpty ) [ self removeLast drop ] ;
+
+// ****************************************************************************
+// freezeAsJson
+//    Freeze a listbuffer as a Json object
+//    All elements must be Json members (Pairs with a string or symbol
+//    as first element)
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Maps
+// ****************************************************************************
+
+// ****************************************************************************
+// mapClass
+//    Return class to use when a method have to create a collection
+//    similar to the receiver
+Collection virtual: mapClass
+   ListBuffer ;
+
+String method: mapClass
+   StringBuffer ;
+
+// ****************************************************************************
+// map(r)
+//    Create a new list with all elements of the receiver after applying
+//    r on them.
+//    If r is a list, add all elements computed 
+//    Example : [ 1, 2, 3, 4, 5 ] map(#sq) --> [ 1, 4, 9, 16, 25 ]
+Object method: map(r) -- aList
+| o m l |
+   ListBuffer newSize(self size r size * ) -> l
+   self forEach: o [ r forEach: m [ o m perform l add ] ] 
+   l l freeze ;
+
+// ****************************************************************************
+// mapIf(p, r)
+//    Create a new list with all elements of the receiver that respond true
+//    to p and after applying r on them.
+//    If r is a list, add all elements computed.
+//    Example : [ 1, 2, 3, 4, 5 ] mapIf(#isEven, #sq) --> [ 4, 16 ]
+Object method: mapIf(t, r)
+| o m l |
+   ListBuffer newSize(self size r size * ) -> l
+   self forEach: o [ r forEach: m [ o t perform ifTrue: [ o m perform l add ] ] ] 
+   l l freeze ;
+
+//******************************************************************************
+// +(c) -- coll
+//    Add two collections
+Collection virtual: +(c) -- coll
+   self mapClass newSize(self size c size + )
+   c apply(#[ over add]) self apply(#[ over add])
+   dup freeze ;
+
+// ****************************************************************************
+// filter(r)
+//    Create a new map with all elements of aCollection that 
+//    answer true to r 
+//    Example : [ 1, 2, 3, 4, 5 ] filter(#[ 3 <= ]) --> [ 1, 2, 3 ]
+Collection method: filter(r) -- coll
+   self mapClass newSize(self size) self applyIf(r, #[ over add])
+   dup freeze ;
+
+// ****************************************************************************
+// reverse 
+//    Reverse elements of the receiver
+Collection method: reverse -- coll
+| o |
+   self mapClass newSize(self size) self revEach: o [ o over add ] 
+   dup freeze ;
+
+// ****************************************************************************
+// scan(r, x)
+//    Take x and the first element of the receiver and apply r.
+//    Then take the result and the seconde element and apply r...
+//    Return a list with all intermediary results,
+//    including aObject as first element.
+//    Example : [ 1, 2, 3, 4, 5 ] scan(#+, 0) --> [0, 1, 3, 6, 10, 15 ]
+Collection method: scan(r, e)
+| l |
+   ListBuffer newSize(self size 1 + ) dup ->l add(e)
+   e self apply(#[ r perform dup l add ]) drop 
+   l l freeze ;
+
+// ****************************************************************************
+// zipWith(r, coll)
+//    Create a list containing elements of initials collections after applying 
+//    aRunnable on them
+//    If collections doesnot have the same size, limit results.
+Indexable method: zipWith(r, c) -- aList
+| i |
+   self size c size min dup ListBuffer newSize swap 
+   loop: i [ i c at i self at r perform over add ]
+   dup freeze ;
+
+// ****************************************************************************
+// zip(coll)
+//    Create a collection with pairs, each containing elements of initials
+//    collections.
+Indexable method: zip -- aList
+   self zipWith(#[ [ , ] ]) ;
+
+// ****************************************************************************
+// unzip 
+//    Reverse zip and create a list of two lists.
+Indexable method: unzip -- aList
+   [ #first self map, #last self map ] ;
+
+// ****************************************************************************
+// zipAll(n, coll1, coll2, ... )
+//    Create a list containing zip elements of n collections.
+//    If collections dont have the same size, limit results.
+func: zipAll(n) -- aList
+| i s colls |
+   ListBuffer init(n, #[ ]) reverse dup ->colls map(#size) reduce(#min) ->s
+   ListBuffer newSize(s) s loop: i [ colls map(#[ at(i) ]) over add ]
+   dup freeze ;
+
+// ****************************************************************************
+// stripAll(coll)
+//    Return a new collection with all objects into aCollection removed
+//    from the receiver
+Collection method: stripAll(toStrip) -- coll
+   #[ toStrip include not ] self filter ;
+
+// ****************************************************************************
+// replaceValueAt(aKey, newValue)
+//    Replace value at aKey with newValue and return a new list
+//    If aKey does not exist, add aKey with this newValue
+//    Example : [ [$a, 1], [$b, 2] ] replaceValueAt($a, 5) 
+//             --> [ [$a, 5], [$b, 2] ]
+Collection method: replaceValueAt(aKey, aValue) -- coll
+| newKey |
+   [ aKey, aValue ] ->newKey
+   self keyAt(aKey) ifNull: [ self [ newKey ] + return ]
+   self map(#[ dup first aKey == ifTrue: [ drop newKey ] ]) ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Collections operations
+// ****************************************************************************
+
+// ****************************************************************************
+// addExpand(x)
+//    Add x to the receiver
+//    If x is a collection, recursively add all elements
+ListBuffer method: addExpand(x) 
+| o |
+   x forEach: o [ o o isCollection ifTrue: [ self addExpand ] else: [ self add ] ] ;
+
+// ****************************************************************************
+// expand
+//    Expand a collection into a list of objects
+Collection method: expand -- aList
+   ListBuffer new dup addExpand(self) dup freeze ;
+
+// ****************************************************************************
+// groupWith(r)
+//    Create a new list, grouping all adjacent elements that respond the 
+//    same value to r.
+//    Return null if the receiver is empty
+//    Example: "abcEFGHijklmNOPQRSTuvwxyZ" groupWith(#isUpper)
+Collection method: groupWith(r) -- aList
+| o l m res |
+   self isEmpty ifTrue: [ null return ]
+   ListBuffer newSize(self size) dup ->l ->res
+   self forEach: o [ 
+      o r perform dup res == 
+         ifTrue: [ drop ] 
+         else: [ ->res m ifNotNull: [ m freeze m l add ] self mapClass new ->m ] 
+      o m add 
+      ] 
+   m freeze l add(m) l l freeze ;
+
+// ****************************************************************************
+// group
+//    Create a new list, grouping all identical adjacent elements
+//    of the receiver into sublistes
+//    Example : [ 1, 1, 1, 2, 3, 3, 3, 1, 1 ] group
+//             -> [ [1, 1, 1], [2], [3, 3, 3], [1, 1] ]
+Collection method: group -- aList 
+   #yourself self groupWith ;
+
+// ****************************************************************************
+// groupBy(r)     ( r aCollection -- aList )
+//    Returns a ListBuffer of sublists.
+//    Each sublist is : 
+//       - the value of r when applied 
+//       - a list of all elements of the receiver that respond the
+//         same value when r is applied.
+//
+//  Example : 10 seq groupBy(#isEven) -> [[0, [1, 3, 5, 7, 9]], [1, [2, 4, 6, 8, 10]]] 
+Object method: groupBy(r) -- aList
+| o key l |
+   ListBuffer new 
+   self forEach: o [
+      dup valueAt( o r perform dup ->key ) ->l
+      l ifNull: [ [ key, ListBuffer new dup ->l ] over add ]
+      o l add
+      ] ;
+
+// ****************************************************************************
+   
+
+
+// ****************************************************************************
+// Sorting indexables (quick sort)
+// ****************************************************************************
+
+// ****************************************************************************
+// quickSortFromTo(m, listBuffer, start, end)
+//    Sort listbuffer from index start to index end using m as sort method
+: quickSortFromTo(m, l, start, end)
+| pivot i front |
+
+   start end < ifTrue: [
+      end start end + 2 / dup l at ->pivot l swapValues
+
+      start dup end 1 - for: i [
+         i l at pivot m perform ifTrue: [ 
+            dup i &= ifFalse: [ dup i l swapValues ] 
+            1 + 
+            ]
+         ] ->front
+      l swapValues(front, end)
+      quickSortFromTo(m, l, start, front 1 -)
+      quickSortFromTo(m, l, front 1 +, end)
+      ] ;
+
+// ****************************************************************************
+// sortElementsWith(m)
+//    Sort elements into a ListBuffer using sort method m
+ListBuffer method: sortElementsWith(m) 
+   quickSortFromTo(m, self, 1, self size) ;
+
+// ****************************************************************************
+// sortElements
+//    Sort elements into a ListBuffer using sort <=
+ListBuffer method: sortElements 
+   #<= self sortElementsWith ;
+
+// ****************************************************************************
+// sortWith(aMethod) -- aList
+//    Sort the receiver using sort method aMethod 
+//    Returns a list of sorted elements
+Indexable virtual: sortWith(m) -- aList
+   ListBuffer newSize(self size) dup addAll(self)
+   dup sortElementsWith(m) dup freeze ;
+
+// ****************************************************************************
+// sortBy(aMethod)
+//    Sort the receiver according #<= after applying aMethod on elements
+//    Returns a list of sorted elements.
+Indexable method: sortBy(m) -- aList
+   #[ m perform swap m perform swap <= ] self sortWith ;
+
+// ****************************************************************************
+// sort
+//    Sort the receiver using #<= as sort method
+//    Returns a list of sorted elements
+Indexable method: sort -- aList
+   #<= self sortWith ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Related definitions
+// ****************************************************************************
+
+// ****************************************************************************
+// sub(i, n)
+//    Return a new collection with n elements from i index.
+Indexable method: sub(i, n) -- coll
+| k |
+   self mapClass newSize(self size)
+   i i n + 1 - self size min for: k [ k self at over add ] dup freeze ;
+
+// ****************************************************************************
+// extract(i, j)
+//    Extract elements from a collection.
+//    Return a new collection with elements from i to j.
+Indexable method: extract(i, j) -- coll
+| k |
+   self mapClass newSize(self size)
+   i 1 max j self size min for: k [ self at(k) over add ] dup freeze ;
+
+// ****************************************************************************
+// left(i)
+//    Return i first elements from the receiver 
+Indexable method: left  // ( n aIndexable -- coll )
+   1 self extract ;
+
+// ****************************************************************************
+// right(i) 
+//    Return i last elements from the receiver 
+Indexable method: right(i) -- aCollection
+   self extract(self size i - 1 +, self size) ;
+
+// ****************************************************************************
+// del(i, j)
+//    Return a new collection with elements of the receiver after removing 
+//    objects from index i to index j
+Indexable method: del(i, j) -- coll
+| k |
+   self size dup self mapClass newSize 
+   swap loop: k [ k between(i, j) ifFalse: [ self at(k) over add ] ]
+   dup freeze  ;
+
+// ****************************************************************************
+// replaceAll(source, target)
+//    Replace all occurences of source elements by target elemennts
+//    into the receiver
+Indexable method: replaceAll(source, target) -- coll
+| i j k l |
+
+   source isCollection ifFalse: [ [ source ] ->source ]
+   self mapClass newSize(self size) -> l 
+   1 -> i
+   while (true) [
+      self indexOfAllFrom(source, i) ->j 
+      i j ifNull: [ self size ] else: [ j 1 - ] for: k [ k self at l add ] 
+      j ifNull: [ break ] 
+        else:   [ l target apply(#[ over add ]) drop j source size + -> i ]
+      ]
+   l l freeze ;
+
+// ****************************************************************************
+// splitBy(n)
+//    Create a list of collections grouping objects n by n
+//    Return the receiver if empty or n negative
+Indexable method: splitBy(n) -- coll
+| i l |
+   self isEmpty n 0 <= or ifTrue: [ null return ]
+   ListBuffer newSize(self size) ->l
+   self size loop: i [
+      i n mod 1 == ifTrue: [ 
+         i 1 == ifFalse: [ dup freeze l add ] 
+         self mapClass newSize(n)
+         ]
+      dup add(i self at)
+      ]
+   dup freeze l add l freeze l ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Test
+// ****************************************************************************
+
+test: [ ListBuffer new dup add(2) dup add(3) dup removeFirst drop [ 3 ] == ]
+test: [ 5 seq map(#sq) [ 1, 4, 9, 16, 25 ] == ]
+test: [ 5 seq map(#[ 1 + ]) seqFrom(2, 6) == ]
+test: [ 5 seq map([#yourself, #[ 1 + ]]) [ 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 ] == ]
+test: [ 10 seq mapIf(#isEven, #[ 1 + ]) [ 3, 5, 7, 9, 11 ] == ]
+
+test: [ [ 1, 2, 3, 4, 5 ] filter(#[ 3 <= ]) [ 1, 2, 3 ] == ]
+test: [ 10 seq filter(#isEven) sum 30 == ]
+test: [ 5 seq reverse [ 5, 4, 3, 2, 1 ] == ]
+test: [ [ 1, 2, 3, 4, 5 ] scan(#+, 0) [0, 1, 3, 6, 10, 15 ] == ]
+
+test: [ [ 1, 2, 3 ] [ 4, 5, 6 ] zipWith(#+) [ 5, 7, 9 ] == ]
+test: [ [ 9, 8, 7 ] [ 1, 2, 3 ] zipWith(#-) [ 8, 6, 4 ] == ]
+test: [ [ 1, 2, 3 ] [ 4, 5, 6 ] zip [ [ 1, 4 ], [ 2, 5 ], [ 3, 6] ] == ]
+test: [ [ [ 1, 4 ], [ 2, 5 ], [ 3, 6] ] unzip [ [ 1, 2, 3 ], [ 4, 5, 6 ] ] == ]
+
+test: [ 10 seq reverse sort 10 seq == ]
+test: [ 10 seq sortWith(#>=) 10 seq reverse == ]
+
+test: [ [ 1, 3, 2, 4, 3 ] groupWith(#isEven) [ [ 1, 3], [2, 4], [3] ] == ]
+test: [ [ 1, 1, 2, 2, 2, 3, 3 ] group [ [ 1, 1], [2, 2, 2], [3, 3] ] == ]
+
+test: [ 10 seq extract(5, 7) [ 5, 6, 7 ] == ]
+test: [ 10 seq left(5) 5 seq == ]
+test: [ 10 seq right(3) seqFrom(8, 10) == ]
+test: [ 10 seq splitBy(3) [ [ 1, 2, 3], [4, 5, 6], [7, 8, 9], [10] ] == ]
+
+test: [ [ [ $a, 1], [$b, 2], [$c, 3] ] replaceValueAt($b, 4) valueAt($b) 4 == ]
+
+// test: [
+      // ListBuffer new dup add([$aa, 2]) dup add([$bb, 4.1])
+      // dup freezeAsJson { $aa : 2, $bb : 4.1 } ==
+      // ]
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// End of ListBuffer class
+// ****************************************************************************
+
+

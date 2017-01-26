@@ -1,0 +1,144 @@
+//******************************************************************************
+//******************************************************************************
+// Task (Object->Task)
+//******************************************************************************
+//******************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Tasks allow to perform runnables concurrently
+//
+// A task is created using : 
+//    - a runnable that must be immutable (and respond to #perform, of course)
+//
+//    - a data stack size.
+//      If not provided, default data stack size is 200.
+//
+// After creating a task, it can be scheduled on a scheduler.
+
+//******************************************************************************
+// Task creation
+//******************************************************************************
+// Object Class new: Task(aRunnable, dsSize)
+
+//******************************************************************************
+// initialize(r, n)
+//    Create a new task
+//       - r is the object to run on parallel when task will be scheduled
+//         r must be immutable and respond to #perform.
+//       - n is the size of data stack used for this task.
+Task method: initialize(r, n)
+   r := runnable
+   n := dsSize ;
+
+//******************************************************************************
+// newSize(r, n) 
+//    Create a new task
+//       - r is the object to run on parallel when task will be scheduled
+//         r must be immutable and respond to #perform.
+//       - n is the size of data stack used for the task.
+Task classMethod: newSize -- aTask
+   super new ;
+
+//******************************************************************************
+// new(r)
+//    Create a new task
+//       - aRunnable is the object to run on parallel when task will be scheduled
+//         aRunnable must be immutable and respond to #perform.
+//
+//    Data stack capacity for this task is 20 objects.
+//
+Task classMethod: new(r) -- aTask
+   200 r self newSize ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Tasks operations
+//******************************************************************************
+
+//******************************************************************************
+// runnable                ( aTask -- r )
+//    Return runnable of the receiver
+Task method: runnable -- r
+   @runnable ;
+
+//******************************************************************************
+// suspendTask             ( aTask System -- )
+//    Suspend current task
+System classMethod: suspendTask 
+   taskSuspend ;
+
+//******************************************************************************
+// schedule                ( aTask -- )
+//    Schedule the task.
+Task method: schedule 
+   self System.Scheduler send drop ;
+
+//******************************************************************************
+// resume                  ( aTask -- )
+//    Resume the receiver.
+//    If the receiver is not a suspended task, throw an exception
+// Native implement
+
+//******************************************************************************
+// &                       ( r -- )
+//    Schedule the receiver
+Runnable method: & 
+   self Task new schedule ;
+
+//******************************************************************************
+// <<(aStream)             ( aStream aTask -- aStream )
+//    Send task into stream
+Task method: << 
+   self runnable << ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Related definitions : map using parallel tasks
+//******************************************************************************
+
+// ****************************************************************************
+// performOnChannel(x, r, ch)
+//    Evaluates r on x.
+//    Result is returned into ch channel
+//    If evaluation throw an exception, return EEXCEPTION on channel.
+: performOnChannel(x, r, ch)
+| e |
+
+   try: e [ x r perform ] 
+   when: [ Exception new("Exception during #mapParallel evaluation") ]
+   .depth 0 &= ifTrue: [ Exception new("No data to return to #mapParallel") ]
+   ch send drop ;
+
+// ****************************************************************************
+// mapParallel(r)
+//    Perform r on each element of the receiver and create a list
+//    with all results.
+//    Each computation is done on a separate task.
+Indexable method: mapParallel(r) -- aList
+| o ch chs i |
+
+   seq(self size) map(#[ drop Channel newSize(1) ]) ->chs
+
+   self size loop: i [ 
+      self at(i) ->o
+      chs  at(i) ->ch
+      #[ performOnChannel(o, r, ch) ] & 
+      ]
+
+   ListBuffer newSize(self size) chs forEach: i [ i receive over add ]
+   dup freeze ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// End of Task class
+//******************************************************************************
+

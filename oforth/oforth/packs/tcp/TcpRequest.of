@@ -1,0 +1,160 @@
+// *****************************************************************************
+// *****************************************************************************
+// TcpRequest class
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+Method new: closedConnection
+Method new: timeoutConnection
+Method new: bufferFull
+
+// *****************************************************************************
+// This class implements a tcp request 
+//    Subclasses should redefine #read to read according to the
+//    desired protocol.
+//
+//    Default protol implemented in this class is to read 1 line on the socket.
+//    When this line has been read one the socket, request is considered read.
+//    and request buffer is considered valid for this protocol.
+//
+//    See HttpRequest class for other protocol implementation.
+
+// *****************************************************************************
+// TcpRequest definition
+// *****************************************************************************
+Object Class new: TcpRequest(conn, mutable buffer, bufferSize, mutable begin, 
+                              mutable error)
+
+
+// *****************************************************************************
+// conn
+//    Return connection associated to this request
+TcpRequest method: connection -- aTCPConnection
+   @conn ;
+
+// *****************************************************************************
+// socket
+//    Return socket connection associated to this request
+TcpRequest method: socket -- aTCPSocketClient
+   @conn socket ;
+
+// *****************************************************************************
+// buffer
+//    Return buffer connection associated to this request
+TcpRequest method: buffer -- aBuffer
+   @buffer ;
+
+// *****************************************************************************
+// error
+//    Return method corresponding to the error detected on the request
+TcpRequest method: error -- aMethod
+   @error ;
+
+// *****************************************************************************
+// initialize(aTcpConnection, aBufferClass, aBufferSize)
+//    Initialize a new tcp request with on a tcp connection.
+//    
+TcpRequest method: initialize(aTcpConnection, aBufferClass, aBufferSize) 
+   aTcpConnection := conn 
+   aBufferSize := bufferSize
+   aBufferClass newSize(@bufferSize) := buffer ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// TcpRequest operations
+// *****************************************************************************
+
+// *****************************************************************************
+// elapsed
+//    Return number of microseconds since request creation
+TcpRequest method: elapsed -- aInteger 
+   System getTick @begin - ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// TcpRequest read protocol implementation
+// *****************************************************************************
+
+// *****************************************************************************
+// appendBuffer(aTimeout)
+//    Append incoming data to request buffer
+//    #read method should call this method until buffer is conform to 
+//    the protocol used or an error (or timeout) occurs
+//    Return null if append is ok, error otherwise
+TcpRequest method: appendBuffer(timeout) -- aMethod | null
+| nb |
+
+   @conn socket receiveWithTimeout(
+         @buffer, 
+         @bufferSize @buffer size - ,
+         timeout
+      ) ->nb
+
+   @buffer size @bufferSize == ifTrue: [ #bufferFull := error ]
+   nb isNull ifTrue: [ #timeoutConnection := error ]
+   else: [ nb ==0 ifTrue: [ #closedConnection := error ] ]
+   @error ;
+
+// *****************************************************************************
+// read
+//    Protocol implementation
+//    Should be redefined into subclasses
+//
+//    Default protocol is implemented only for example purpose.
+//    HTTP protocol is implemented into HTTPMessage class.
+// 
+//    Default protocol between clients and server is to read one line 
+//    (ie until LF is encoutered) : 
+//       1) Check buffer for LF
+//       2) if LF is not yet here, append new data to buffer and check from 
+//          previous size to new buffer size
+//       3) If append returns an error (timeout, connection closed, ...) return.
+//          The error will be handled by #handleConnection
+//          
+//    Other error methods can be raised if the buffer does not conform a protocol.
+//    If so, this method should be implemented by the caller.  Otherwise
+//    "Unknow read error" will be logged.
+TcpRequest virtual: read
+| indexSearch |
+
+   1 ->indexSearch
+   while(@buffer indexOfFrom(LF, indexSearch) ==0) [ 
+      @buffer size 1 + ->indexSearch
+      self appendBuffer(1000000) ifNotNull: [ return ]
+      ] ;
+
+// *****************************************************************************
+// readRequest
+//    Read a full request on the socket and store it into the request buffer
+//    Call virtual method #read to read and check if the buffer is OK according to
+//    used protocol.
+TcpRequest method: readRequest
+   // Empty the connection buffer
+   @buffer empty
+   
+   // First check if a new request is available with keep alive timeout
+   // If no keep alive, use 1000 ms timeout for the first read
+   1000000 @conn keepAliveDelay ==0 ifFalse: [ drop @conn keepAliveDelay ]
+   self appendBuffer ifNotNull: [ return ]
+
+   // Set beginning of request here.
+   System getTick := begin
+
+   // Then call read method to read input according to the desired protocol
+   self read ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// End of TcpRequest class
+// *****************************************************************************
+

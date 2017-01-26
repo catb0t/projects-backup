@@ -1,0 +1,1 @@
+DO print("4 8 15 16 23 42");system("ping 1.0.0.0 -c1 -w6240>/dev/null" )OD

@@ -1,0 +1,145 @@
+// *****************************************************************************
+// *****************************************************************************
+// Buffer methods (Object->Collection->Buffer)
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+
+// Buffer implements memory buffer with Read access
+
+// *****************************************************************************
+// Class definition
+// *****************************************************************************
+// Collection Class new: Buffer
+
+// *****************************************************************************
+// new
+//    Create a new buffer with default allocated size
+Buffer classMethod: new -- aBuffer
+   27 super new ;
+
+// *****************************************************************************
+// newSize(n)
+//    Create a new buffer with aInteger allocated size.
+Buffer classMethod: newSize   // n Buffer -- aBuffer
+   super new ;
+
+// *****************************************************************************
+// basicSize      ( aBuffer -- n )
+//    Return buffer size
+// Native method
+
+// *****************************************************************************
+// size           ( aBuffer -- n )
+//    Return buffer size
+Buffer virtual: size -- n
+   self basicSize ;
+
+//******************************************************************************
+// basicAt(aInteger) -- c
+//    Return int8 at aInteger position (1-based)
+//    Return null if aInteger is out of buffer range
+// Native method
+
+//******************************************************************************
+// at(aInteger) -- c
+//    Return int8 at aInteger position (1-based)
+//    Return null if aInteger is out of buffer range
+Buffer virtual: at   // ( n aBuffer -- c )
+   self basicAt ;
+
+//******************************************************************************
+// freeze
+//    For buffers, do nothing
+Buffer method: freeze ;
+
+//******************************************************************************
+// Buffer are indexables
+Buffer is: Indexable
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Buffer and UTF8 sequences
+// *****************************************************************************
+
+[ 0x3080, 0xE2080, 0x3C82080 ] const: Buffer.Utf8Translate
+
+// *****************************************************************************
+// Buffer.utf8SeqSize(aInteger)
+//    Return length of utf8 sequence beginning by aInteger excluding itself
+//    Return null if aInteger is not a valid UTF8 sequence initiator
+: Buffer.utf8SeqSize(c) -- n
+   c 0x7F <=             ifTrue: [ 0 return ]
+   c between(0xC2, 0xDF) ifTrue: [ 1 return ]
+   c between(0xE0, 0xEF) ifTrue: [ 2 return ]
+   c between(0xF0, 0xF4) ifTrue: [ 3 return ]
+   null ;
+
+// *****************************************************************************
+// utf8At(aInteger)
+//    Return : 
+//       - utf8 character at aInteger position into the buffer.
+//       - corresponding utf8 sequence size.
+//
+//    Return null if there is no UTF8 character at aInteger position
+//
+Buffer method: utf8At(i) -- n c
+| seqSize j c firstChar | 
+   i self basicAt dup dup ->firstChar ifNull: [ return ]
+   Buffer.utf8SeqSize dup ->seqSize ifNull: [ null return ]
+
+   firstChar seqSize 0 &= ifTrue: [ 0 swap return ]
+
+   seqSize loop: j [ 
+      i j + self basicAt ->c
+      c ifNull: [ drop null return ]
+      c between(0x80, 0xBF) ifFalse: [ drop null return ]
+      j 1 == ifTrue: [
+         seqSize 2 == ifTrue: [
+            firstChar 0xE0 == c 0xA0 < and ifTrue: [ drop null return ]
+            firstChar 0xED == c 0x9F > and ifTrue: [ drop null return ]
+            ]
+         seqSize 3 == ifTrue: [
+            firstChar 0xF0 == c 0x90 < and ifTrue: [ drop null return ]
+            firstChar 0xF4 == c 0x8F > and ifTrue: [ drop null return ]
+            ]
+         ]
+      bitLeft(6) c +
+      ]
+   Buffer.Utf8Translate at(seqSize) - seqSize swap ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Tests
+// *****************************************************************************
+test: [ Buffer.utf8SeqSize('a')  0 == ]
+test: [ Buffer.utf8SeqSize(0xC2) 1 == ]
+test: [ Buffer.utf8SeqSize(0xE0) 2 == ]
+test: [ Buffer.utf8SeqSize(0xF0) 3 == ]
+
+test: [ "ab\U00E9cd\U00E9ef" basicSize  10    == ]
+
+test: [ "ab\U00E9cd\U00E9ef" basicAt(2) 'b'   == ]
+test: [ "ab\U00E9cd\U00E9ef" basicAt(3) 0xC3  == ]
+test: [ "ab\U00E9cd\U00E9ef" basicAt(4) 0xA9  == ]
+test: [ "ab\U00E9cd\U00E9ef" basicAt(5) 'c'   == ]
+
+test: [ "ab\U00E9cd\U00E9ef" utf8At(5) nip 'c' == ]
+test: [ "ab\U00E9cd\U00E9ef" utf8At(7) nip 233 == ]
+test: [ "ab\U00E9cd\U00E9ef" utf8At(9) nip 'e' == ]
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// End of Buffer class
+// *****************************************************************************
+

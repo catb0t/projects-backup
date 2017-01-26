@@ -1,0 +1,45 @@
+INSTALLATION : 
+--------------
+1) Unzip or untar oforth release into a directory of your choice.
+
+2) Set OFORTH_PATH environnement variable value to this directory.
+   - For instance : /Home/Oforth
+   - Use always '/' as separator (even if your OS don't)
+   - You can add multiple directories (separated by ':' under Linux and ';' under Windows)
+
+3) You could also add this directory to your PATH to allow oforth to be executed from anywhere.
+
+4) If you add packages, you can : 
+  - either untar/unzip them into your oforth directory or into packs directory
+  - either copy them elsewhere (a 'pack' dictionary for instance) and add this directory to your OFORTH_PATH variable.
+
+5) To run oforth : 
+- oforth --i    : Interpreter mode.
+- oforth [file] : Run oforth, execute file and leave.
+- You can also define oforth stdin, stdout and stderr using '>', '<', '|', ...
+- Check other options with oforth --h
+
+Example (with Linux or Mac OS using bash) : 
+- Let's say your home directory is /Users/Name
+- Let's say oforth is installed into /Users/Name/oforth
+
+- You can go to your home directory (/Users/Name) and update (or create) .bash_profile file.
+- Into this file, add those two lines : 
+
+export OFORTH_PATH=/Users/Name/oforth
+export PATH=$OFORTH_PATH:$PATH
+
+- Now, each time you launch a terminal, those variable will be set.
+
+
+OFORTH DIRECTORY CONTENT : 
+--------------------------
+Oforth directory contains : 
+- oforth (or oforth.exe)
+- INSTALL.TXT 	: this file
+- LICENCE.TXT 	: Oforth licence.
+- lang		: package with all basic Oforth classes. When launched, oforth loads this package.
+- packs		: packages 
+- examples      : some oforth examples.
+
+ 

@@ -1,0 +1,166 @@
+// ****************************************************************************
+// ****************************************************************************
+// Indexable Property 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Indexable objects are collections that can be accessed using #at
+// Indexables must implement : 
+//    - #size : return number of objects into the collection
+//    - #at(aInteger) : return object at position aInteger
+
+
+// ****************************************************************************
+// Indexable definition
+// ****************************************************************************
+Property new: Indexable
+Indexable requires: size
+Indexable requires: at
+
+
+// ****************************************************************************
+// isIndexable
+//    Return true if the receiver is indexable
+Object virtual: isIndexable -- b
+   false ;
+
+Indexable method: isIndexable -- b
+   true ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Traversing an Indexable
+// ****************************************************************************
+
+// ****************************************************************************
+// forEachNext
+//		Loop on indexable elements (see Collection.fpp)
+Indexable virtual: forEachNext
+   dup ifNull: [ drop 0 ] 
+   1 + dup self size <= ifTrue: [ dup self at true return ]
+   drop false ;
+
+// ****************************************************************************
+// forEachPrev
+//    Loop on list elements using reverse order
+Indexable virtual: forEachPrev
+   dup ifNull: [ drop self size 1 + ]
+   1 - dup 0 > ifTrue: [ dup self at true return ]
+   drop false ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Indexable operations
+// ****************************************************************************
+
+// ****************************************************************************
+// inRange(aInteger)
+//    Return true if aInteger is into the possible indexes for the
+//    receiver
+Indexable method: inRange(n) -- b
+   n between(1, self size) ;
+
+// ****************************************************************************
+// first/last/second/third
+//    Return first/last element of the receiver, null if none
+Indexable method: first -- x
+   1 self at ;
+
+Indexable method: second -- x
+   2 self at ;
+
+Indexable method: third -- x
+   3 self at ;
+
+Indexable method: last -- x
+   self size self at ;
+
+// ****************************************************************************
+// indexOfFromTo(x, from, to)
+//    Return index of first occurence of x after 'from' position
+//    and before 'to' position
+//    Return null if none
+//    Example : "abcdabcde" indexOfFromTo('a', 3, 6) -> 5
+Indexable method: indexOfFromTo(o, from, to) -- n
+| i |
+   from 1 max self size to min 
+   for: i [ i self at o == ifTrue: [ i return ] ] null ;
+
+// ****************************************************************************
+// indexOfFrom(x, from)
+//    Return index of first occurence of x after aInteger position
+//    Return null if none
+//    Example : "abcdabcde" indexOfFromTo('a', 3) -> 5
+Indexable method: indexOfFrom(o, from) -- n
+   self size from o self indexOfFromTo ;
+
+// ****************************************************************************
+// indexOf(x)
+//    Return index of first x into aIndexable
+//    Return null if none
+//    Example : "abcdabcde" indexOf('a') -> 1
+Indexable method: indexOf(o) -- n
+   self size 1 o self indexOfFromTo ;
+
+// ****************************************************************************
+// lastIndexOfFromTo(x, from, to)
+//    Return last index of x occurence after from position
+//    and before to position
+//    Return null if none
+//    Example : "abcdabcde" lastIndexOfFromTo('a', 1, 8) -> 5
+Indexable method: lastIndexOfFromTo(o, from, to) -- n
+| i |
+   to self size min from 1 max -1 
+   step: i [ o i self at == ifTrue: [ i return ] ] null ;
+
+// ****************************************************************************
+// lastIndexOf(x)
+//    Return index of last x occurrence
+//    Return 0 if none
+//    Example : "abcdabcde" lastIndexOf('a') -> 5
+Indexable method: lastIndexOf(o) -- n
+   self size 1 o self lastIndexOfFromTo ;
+
+// *******************************************************************
+// isAllAt(aCollection, index)
+//    Return true if the receiver elements are all at index position of
+//    aCollection. Return false otherwise
+Indexable method: isAllAt(coll, n) -- b
+| i |
+   self size loop: i [ self at(i) coll at(i n + 1 - ) == ifFalse: [ false return ] ]
+   true ;
+
+// ****************************************************************************
+// indexOfAllFrom(coll, from)
+//    Search coll elements into the receiver between from and to
+//    and return first index that match match.
+//    Return null if none
+Indexable method: indexOfAllFrom(source, from) -- n
+| i |
+   source isEmpty ifTrue: [ null return ]
+   from 1 max self size source size - 1 + 
+   for: i [ source isAllAt(self, i) ifTrue: [ i return ] ]
+   null ;
+
+// ****************************************************************************
+// indexOfAll(coll) 
+//    Search aColl elements into the receicer and return first index match
+//    Return null if none
+Indexable method: indexOfAll(coll) -- n
+   1 coll self indexOfAllFrom ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// End of Indexable property
+// ****************************************************************************
+

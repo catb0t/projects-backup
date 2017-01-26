@@ -1,0 +1,95 @@
+// ****************************************************************************
+// ****************************************************************************
+// Json (Object->Collection->List->Json)
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Json implements a JSON object : a list of pairs [ member : value ]
+// Json are immutables.
+// Json are 1-based (first element is at position 1).
+
+// ****************************************************************************
+// List Class new: Json
+
+
+// ****************************************************************************
+// Send objects to a stream with Json format
+// ****************************************************************************
+
+// ****************************************************************************
+// <<Json(aStream)
+//    Send Oforth object notation of the receiver to a stream
+Object virtual: <<Json 
+   self << ;
+
+// ****************************************************************************
+// << 
+//    Send aCollection to aStream as Json object
+Collection virtual: <<Json
+| f o |
+   '[' <<c
+   self forEach: o [ f ifNull: [ false ->f ] else: [ ", " << ] o <<Json ] 
+   ']' <<c ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Json output
+// ****************************************************************************
+
+// ****************************************************************************
+// << 
+//    Send aJson to aStream
+Json virtual: << 
+| f o |
+   '{' <<c
+   self forEach: o [ 
+      f ifNull: [ false ->f ] else: [ ", " << ]
+      "\"" << o first << "\" : " << o second <<Json
+      ]
+   " }" << ;
+
+// ****************************************************************************
+// <<Json
+//    For Json, just send the receiver
+Json method: <<Json 
+   self << ;
+
+// ****************************************************************************
+// asString
+//    Return string representation of the receiver
+Json method: asString -- s
+   StringBuffer new self << dup freeze ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ { "aa" : 12 } valueAt("aa") 12 == ]
+test: [ { "aa" : 12 } valueAt($aa)  12 == ]
+test: [ { $aa  : 12 } valueAt("aa") 12 == ]
+test: [ { $aa  : 12 } valueAt($aa)  12 == ]
+
+test: [ { $aa : [ "bb", 12, { "c" : 4 } ] } valueAt($aa) at(2) 12 == ]
+
+test: [
+   { "person" : { "name" : "John", "age" : 12 , "values" : [ 12, 1.3, null ] } }
+   valueAt($person) valueAt($values) at(2) 1.3 ==
+      ]
+
+test: [ 
+   { "allTypes" : [ "str", 12, { "ab" : 13.1 } , [ 1, 2 ], true, false, null ] } 
+   valueAt($allTypes) at(3) valueAt($ab) 13.1 ==
+  ]
+
+// ****************************************************************************
+// End of Json class
+// ****************************************************************************
+

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="utf-8">
+	<title>THE END | Night Ride</title>
+	<link rel="stylesheet" type="text/css" href="../stylesheet_global.css">
+	<script type="text/javascript" src="../global.js"></script>
+</head>
+
+<body>
+	<div id="textContent">
+	<p id="textBody" class="text">
+Instead of following your friends (as if you ever had them), you elect to stay home, tapping on a keyboard, like the boring loser you are. No adventure for you, I suppose. No death, either, though, so maybe that’s a plus.” —PRESS ANY KEY—</p>
+	</div>
+	<p class="hidden"></p>
+</body>

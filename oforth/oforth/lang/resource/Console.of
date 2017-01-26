@@ -1,0 +1,129 @@
+//******************************************************************************
+//******************************************************************************
+// Console (Object->Resource->Console)
+//******************************************************************************
+//******************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// A console is a resource that allow to retrieve and write characters 
+//
+// Console object is available only if Oforth runs into interpreter mode.
+//
+// The console system is the value of System.Console constant. If no console is
+// available, value is null.
+
+
+//******************************************************************************
+// Console creation
+//******************************************************************************
+// Resource Class new: Console
+
+//******************************************************************************
+// initialize
+//    A console object is only created at startup
+Console method: initialize 
+   #new self shouldNotCall ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Console output operations (screen)
+//******************************************************************************
+
+//******************************************************************************
+// sendChar(c)
+//    Send a char on console
+//
+Console method: sendChar
+   consoleSendChar ;
+
+//******************************************************************************
+// sendString(s)
+//    Send a string on console
+//
+Console method: sendString
+   consoleSendString ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Console input operations (keyboard)
+//******************************************************************************
+
+//******************************************************************************
+// select(mode)
+//    Check if console is ready for aMode
+//    mode is Resource.RECEIVE or Resource.SEND
+//    
+//    If mode is Resource.RECEIVE, select return true if akey has been pressed
+//
+//    If mode is Resource.SEND, select return always true.
+// Native method
+
+//******************************************************************************
+// receiveTimeout(n)
+//    Wait until a key is pressed on console or timeout occurs.
+//
+//    n is number of micro seconds to wait :
+//       - If n is null, wait until a key is pressed
+//       - If n is 0, return immediatly.
+//
+//    Return is a pair or null : 
+//       - First element is char returned. Value is 0 if key is not a char
+//       - Second element is the virtual key.
+//       - If no key has been pressed, return is null.
+//
+Console method: receiveTimeout -- [ c, virtualKey ]
+| key |
+   consoleReceiveKey ->key 
+   key ifNull: [ key ] else: [ [ key 0x003FFFFF bitAnd, key bitRight(22) ] ] ;
+
+//******************************************************************************
+// receive
+//    Wait until a key is pressed on console and returns it.
+//
+//    Return is a pair : 
+//       - First element is char returned. Value is 0 if key is not a char
+//       - Second element is the virtual key.
+Console method: receive -- [ c, virtualKey ]
+   null self receiveTimeout ;
+
+//******************************************************************************
+// receiveChar
+//    Waits until a char is pressed on console and returns it
+//
+Console method: receiveChar -- c
+   while(self receive first dup ==0) [ drop ] ;
+
+//******************************************************************************
+// flush
+//    Flush the console input
+Console method: flush 
+   while(0 self receiveTimeout notNull) [ ] ;
+
+//******************************************************************************
+// ask
+//    Read a string from console until LF
+Console method: ask -- s
+   StringBuffer newSize(50) 
+   while (self receiveChar dup LF <>) [ dup self sendChar <<c ] drop
+   dup freeze ;
+
+//******************************************************************************
+// askln
+//    Read a string from console until LF and output cr at the end
+Console method: askln -- s 
+   self ask printcr ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// End of Console class
+//******************************************************************************
+

@@ -1,0 +1,38 @@
+# tips
+35
+.09
+.18
+
+
+# cToF
+100
+
+# fToC
+32
+
+# interest
+100
+.05
+4
+10
+
+# dist (BOS to SF)
+42.3601
+71.0589
+37.7833
+122.4167
+
+# change
+44.46
+100
+
+# madlib
+ADD
+YOUR 
+OWN
+VALUES
+VALUES
+VALUES
+VALUES
+VALUES
+ꦬꦬꦬꦬ

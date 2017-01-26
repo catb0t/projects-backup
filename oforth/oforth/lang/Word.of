@@ -1,0 +1,346 @@
+// ****************************************************************************
+// ****************************************************************************
+// Word class and subsclasses
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Word is the parent of all object model classes
+// including : classes, properties, methods, functions, ...
+
+#method: alias: m:
+#virtual: alias: v:
+#: alias: func: 
+
+// ****************************************************************************
+// Word class
+// ****************************************************************************
+// Object Class new: Word
+
+// ****************************************************************************
+// name                 ( aWord -- aSymbol )
+//    Return word name as a symbol
+//    Example : Integer name --> "Integer"
+// Native method
+
+// ****************************************************************************
+// find(aString) -- aWord
+//    Return word which name is aString, return null if none
+//    Example : Word find("dup") --> #dup
+// Native class method
+
+// ****************************************************************************
+// alias: aString       ( aWord -- )
+//    Creates an alias of the receiver into the current package
+//    Example : #tcp:TcpServer alias: TcpServe
+// Native method
+
+// ****************************************************************************
+// new 
+//    Words cannot be created by #new
+Word method: initialize 
+   #new self shouldNotCall ;
+
+// ****************************************************************************
+// <<                   ( aStream aWord -- aStream )
+//    Use word name to print object
+//    Example : System out Integer << cr
+Word virtual: << 
+   self name << ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Property class
+// ****************************************************************************
+// Word Class new: Property
+
+// ****************************************************************************
+// new:
+//    Create a new property with next word as name
+//    Example : Property new: Comparable
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Class class
+// ****************************************************************************
+// Word Class new: Class
+
+// ****************************************************************************
+// newPriority: 
+//    Create a new class 
+//       - class name is the next word 
+//       - priority and parent class are on the stack
+//    Example : 10 Object Class newPriority: Customer
+
+// ****************************************************************************
+// new: 
+//    Create a new class 
+//       - class name is the next word 
+//       - parent class is on the stack
+//       - Priority is set to 0
+//    Example : Object Class new: Customer
+Class classMethod: new:(aClass) 
+   0 aClass self newPriority: ;
+
+// ****************************************************************************
+// superclass 
+//    Return parent of the receiver, null if none
+//    Example : Object superclass  -> null
+//    Example : Integer superclass -> Number
+// Native method
+
+// ****************************************************************************
+// is: 
+//    Set property for aClass
+//    Property is next word read
+//    Example : Integer is: Comparable
+// Native method
+
+// ****************************************************************************
+// implementor(aMethod)
+//    Return implementor of aMethod for the receiver (a class or a property)
+//    Return null if none
+//    Example : Integer implementor(#between) -> Comparable
+// Native method
+
+// ****************************************************************************
+// classImplementor(aMethod)
+//    Return class implementor of aMethod for aClass
+//    Return null if none
+//    Example : Integer classImplementor(#new) --> Integer
+// Native method
+
+// ****************************************************************************
+// isChildOf(aClass) 
+//    Return true if the receiver is child of aClass
+//    Example : Integer isChildOf(Number) -> true
+Class method: isChildOf(cl) -- b
+   self while ( dup notNull over cl &= not and ) [ superclass ] cl &= ;
+
+// ****************************************************************************
+// understand(aMethod)
+//    Return true if the receiver understand aMethod
+//    Example: Integer understand(#+) -> true
+Class method: understand   // aMethod aClass --- b
+   self implementor notNull ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Function class
+// ****************************************************************************
+// Word Class new: Function
+
+// ****************************************************************************
+// func: aName
+//    Create a new function with aNama as name
+
+// ****************************************************************************
+// : aName
+//    Synonym for #func:
+
+// ****************************************************************************
+// perform 
+//    Perform the receiver
+//    Example : 12 #dup perform -> 12 12 
+// Native method
+
+// ****************************************************************************
+// Now Function can be Runnable
+Function is: Runnable
+
+// ****************************************************************************
+// << 
+//    Use function name to output functions
+Function method: << 
+   "#" << super << ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Pausable class
+// ****************************************************************************
+// Word Class new: Function
+
+// ****************************************************************************
+// << 
+//    Use function name
+Pausable method: << 
+   "#" << super << ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Method class
+// ****************************************************************************
+// Word Class new: Method
+
+
+// ****************************************************************************
+// new: 
+//    Create a new method with next word as name
+// Native class method
+
+// ****************************************************************************
+// perform 
+//    Perform the method on top of stack 
+//    Example : 12 12 #+ perform -> 24
+//    Example : 12 12 #+ #perform #perform #perform perform -> 24
+// Native method
+
+// ****************************************************************************
+// Now Method can be Runnable
+Method   is: Runnable
+Operator is: Runnable
+
+// ****************************************************************************
+// << 
+//    Use method name
+Method   method: << 
+   "#" << super << ;
+
+Operator method: << 
+   "#" << super << ; 
+
+// ****************************************************************************
+
+// ****************************************************************************
+// Constant class
+// ****************************************************************************
+// Word Class new: Constant
+
+
+// ****************************************************************************
+// new:
+//    Create a new constant with next word as name and value on the stack
+//    Example : 3.14 Constant new: Pi
+// Native class method
+
+// ****************************************************************************
+// value
+//    Return constant value
+//    Example : Word find("System.VERSION") value
+// Native method
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Related definitions
+// ****************************************************************************
+ 
+// ****************************************************************************
+// isA(aClass) -- aBoolean
+//    Return true if receiver is an instance of aClass
+//    Example : Integer 1 isA -> true
+//            : Float 1 isA -> false
+Object method: isA            // aClass x -- b
+   self class &= ;
+
+// ****************************************************************************
+// isKindOf(aClass) -- aBoolean
+//    Return true if the receiver is an instance of aClass or its subclasses
+//    Example : 1 isKindOf(Number) -> true
+Object method: isKindOf       // aClass x -- b 
+   self class isChildOf ;
+
+// ****************************************************************************
+// respondTo(aMethod)
+//    Return true if aObject respond to aMethod
+//    Example : 1 respondTo(#+) -> true
+Object method: respondTo      // aMethod x -- b
+   self class understand ;
+
+// *****************************************************************************
+// asWord
+//    Return the word which name is aString
+//    Return null if none
+String method: asWord -- aWord | null
+   self Word find ;
+
+// *****************************************************************************
+// asClass
+//    Return the class which name is aString
+//    Return null if none
+String method: asClass -- aClass | null
+   self Word find dup isA(Class) ifFalse: [ drop null ] ;
+
+// *****************************************************************************
+// asProperty
+//    Return property which name is aString
+//    Return null if none
+String method: asProperty -- aProperty | null
+   self Word find dup isA(Property) ifFalse: [ drop null ] ;
+
+// *****************************************************************************
+// asFunction
+//    Return function which name is aString
+//    Return null if none
+String method: asFunction -- aFunction | null
+   self Word find dup isA(Function) ifFalse: [ drop null ] ;
+
+// *****************************************************************************
+// asMethod 
+//    Return method which name is aString
+//    Return null if none
+String method: asMethod -- aMethod | null
+   self Word find dup isA(Method) ifFalse: [ drop null ] ;
+
+// ****************************************************************************
+// checkType(aClass, aString)
+//    Check object class.
+//    If object class is not aClass, throw an ExBadType exception with
+//    aString as message.
+Object method: checkType(aClass, aMessage)
+   self isA(aClass) ifFalse: [ ExBadType throw(aMessage, aClass, self) ] ;
+
+// ****************************************************************************
+// checkParent(aClass, aString)
+//    Check is object class is a children of aClass
+//    If not, throw an ExBadType exception with
+//    aString as message.
+Object method: checkParent(aClass, aMessage)
+   self isKindOf(aClass) ifFalse: [ ExBadType throw(aMessage, aClass, self) ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ Object name "Object" == ]
+test: [ Word find("Object") Object == ]
+test: [ "Object" asWord Object == ]
+test: [ Word find("_notAWordDeclared") isNull ]
+
+test: [ Object superclass isNull ]
+test: [ Integer superclass Number == ]
+test: [ Integer implementor(#isA) Object == ]
+test: [ Integer isChildOf(Number) ]
+test: [ Word understand(#name) ]
+test: [ Object isA(Class) ]
+test: [ 1 isKindOf(Number) ]
+test: [ 1 respondTo(#+) ]
+
+test: [ "Integer" asClass Integer == ]
+test: [ "Integer" asMethod isNull ]
+test: [ "dup" asFunction notNull ]
+test: [ "dup" asMethod isNull ]
+test: [ "new" asMethod #new == ]
+
+test: [ 3 2 #+ curry perform 5 == ]
+
+// ****************************************************************************
+// End of Word classes
+// ****************************************************************************
+

@@ -1,0 +1,125 @@
+// ******************************************************************************
+// ******************************************************************************
+// TCPSocketServer (Object->Resource->TCPSocket->TCPSocketServer)
+// ******************************************************************************
+// ******************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+// TCPSocketServer allows to create a socket that will wait for connections
+
+// TCPSocket Class new: TCPSocketServer(backLog)
+
+//******************************************************************************
+// initialize(port, backLog, mode)
+//    Initialize server socket
+//    After initialization, socket is ready to accept connections.
+//    Throw exception if the socket cannot be initialized.
+//    If so, lastError and lastOSError are set.
+//
+//    - port is the port or service to use to listen on the server side.
+//      It is a string with either port number or service.
+//
+//    - backlog is the size of the backlog queue.
+//
+//    - mode is the mode used by the socket when listening : 
+//       - TCPSocket.IPV4  : Socket will listen only IPV4 connections.
+//       - TCPSocket.IPV6  : Socket will listen only IPV6 connections.
+//       - TCPSocket.IPALL : Socket will listen for IPV4 and IPV6 connections.
+//
+//    Errors : 
+//       - ESOCKCREATE : System cannot create a SockectServer object (socket)
+//       - ESOCKBIND   : Socket created but cannot bind socket (bind)
+//       - ESOCKPORT   : Bind is ok but can retrieve address (getsockname)
+//       - ESOCKLISTEN : Can't listen on the socket (listen)
+//
+// Native method
+
+//******************************************************************************
+// newBackLog(port, backLog, mode)
+//    Create a new socket server using port and backLog.
+//    If port is 0, it will be assigned by the system.
+//
+//    Mode is : 
+//       - TCPSocket.IPV4  : Socket will listen only IPV4 connections.
+//       - TCPSocket.IPV6  : Socket will listen only IPV6 connections.
+//       - TCPSocket.IPALL : Socket will listen for IPV4 and IPV6 connections.
+TCPSocketServer classMethod: newBackLog // (mode backLog port -- aTCPSocketServer )
+   super new ;
+
+//******************************************************************************
+// new(port)
+//    Create a new socket server on port or service using : 
+//       - 10 for backLog.
+//       - TCPSocket.IPALL : this socket will listen either for IPV4 or IPV6
+//         connections.
+TCPSocketServer classMethod: new(aPort) -- aTCPSocketServer
+   TCPSocket.IPALL 10 aPort self newBackLog ;
+
+//******************************************************************************
+// backLog 
+//    Return backlog for socket
+//    If queue is full, client will receive "connection refused"
+TCPSocketServer method: backLog -- n
+   @backLog ;
+
+//******************************************************************************
+// acceptTimeout(n)
+//    Accept new connections.
+//    When new connection is coming, create and return a new TCPSocketClient.
+//
+//    n is the timeout to wait (microseconds) for new connection : 
+//       - If null, acceptTimeout will block until a new connection arrives.
+//       - If 0, acceptTimeout checks for new connection and returns.
+//
+//    WARNING : In order to retrieve new TCP connections as fast as possible and
+//              avoid to fill the backlog when other tasks run, if timeout is 
+//              null, #accept will block the worker.
+//
+//    Return values : 
+//       - If new connection, return aTCPSocketClient connected to remote client
+//       - If error or timeout, return null (check System lastError).
+//
+//    Errors : 
+//       - ETIMEOUT    : A timeout occured.
+//       - ERESCLOSED  : The resource is closed.
+//       - ESOCKACCEPT : Accept returned an OS error (accept).
+//       - ESOCKOPT    : Accept is ok, but cannot set socket options (setsockopt).
+//       - ESOCKCREATE : Accept is ok, but cannot set non blocking (ioctl).
+//
+TCPSocketServer method: acceptTimeout  // ( n aTCPSockServer -- aTCPSocketClient)
+   self tcpSockAcceptTimeout ;
+
+//******************************************************************************
+// accept 
+//    Accept new connections without timeout (so blocking call)
+//    When new connection is coming, creates and return a new TCPSocketClient 
+//    
+//    WARNING : In order to retrieve new TCP connections as fast as possible and
+//              avoid to fill the backlog when other tasks run, #accept will block 
+//              the worker.
+//              So it is highly recommended to run a task that will accept
+//              connections into a dedicated scheduler.
+//
+//    Return values : 
+//       - If new connection, return aTCPSocketClient connected to remote client
+//       - If error, return null and System lastError & System lastOSError are set.
+//
+//    Errors : 
+//       - ERESCLOSED  : The receiver (aTCPSocketServer) is closed.
+//       - ESOCKACCEPT : Accept returned an OS error.
+//       - ESOCKOPT    : Accept is ok, but cannot set socket options (setsockopt).
+//       - ESOCKCREATE : Accept is ok, but cannot set non blocking (ioctl).
+//
+TCPSocketServer method: accept -- aTCPSocketClient
+   null self acceptTimeout ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// End of TCPSocketServer class
+//******************************************************************************
+

@@ -1,0 +1,84 @@
+// *****************************************************************************
+// *****************************************************************************
+// Logger class 
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+
+import: date
+import: emitter
+
+// *****************************************************************************
+// A logger can be shared by tasks and allows to log informations into a file 
+// handling concurrency between those tasks
+
+// *****************************************************************************
+Emitter Class new: Logger(name)
+
+
+//******************************************************************************
+// Logger operations
+//******************************************************************************
+
+//******************************************************************************
+// handleLogRequest(aLogEvent)
+//    Handle log requests 
+//    Logger file names are logname_YYYYMMDD.log
+Logger method: handleLogRequest(aLogEvent)
+| d file |
+
+   Date today ->d
+
+   StringBuffer new @name << '_' <<c d year << 
+      d month <<wjp(0, Stream.JUSTIFY_LEFT, 2) 
+      d day   <<wjp(0, Stream.JUSTIFY_LEFT, 2) 
+      ".log" << 
+   dup freeze File new ->file
+
+   file open(File.APPEND)
+   file aLogEvent second << cr
+   file close ;
+
+// *****************************************************************************
+// log(aLevel, x) 
+//    Log aObject into the file with level aLevel
+//    Send event [$log, string ]
+Logger method: log(level, x)
+| s |
+   StringBuffer newSize(500) '[' <<c Date now << "] " << level << ": " << x << 
+   dup freeze ->s
+   self emit([$log, s]) ;
+
+Logger method: logInfo(x)    
+   self log("[INFO   ] ", x) ;
+
+Logger method: logWarning(x) 
+   self log("[WARNING] ", x) ;
+
+Logger method: logError(x) 
+   self log("[ERROR  ] ", x) ;
+
+// *****************************************************************************
+
+
+//******************************************************************************
+// Logger creation
+//******************************************************************************
+
+//******************************************************************************
+// initialize(aName)
+//    Initialize the logger and creates a channel used to send logs
+Logger method: initialize(name)
+   super initialize(null)
+   name := name
+   self onEvent($log, #handleLogRequest) ;
+
+//******************************************************************************
+
+
+// *****************************************************************************
+// End of Logger class
+// *****************************************************************************
+

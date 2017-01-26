@@ -1,0 +1,360 @@
+// ****************************************************************************
+// ****************************************************************************
+// Collection (Object->Collection)
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Collections implements containers for others objects
+
+// Each subclass of Collection must provide two methods : 
+// - forEachNext
+// - forEachPrev
+
+// ****************************************************************************
+// Object Class new: Collection
+
+// ****************************************************************************
+// isCollection         ( x -- b )
+//    Return true if an object is a collection
+Object virtual: isCollection -- b
+   false ;
+
+Collection method: isCollection -- b
+   true ;
+
+// ****************************************************************************
+// High order collection methods
+// ****************************************************************************
+
+// ****************************************************************************
+// forEachNext(x)       ( x aCollection -- aObject item true | false )
+//
+// The basic way to traverse a collection is to use the following syntax : 
+//    aCollection forEach: o [ ... ]
+//    - The variable "o" should be declared into the body method.
+//    - Instructions into the brackets are performed for each item of the 
+//      collection. o is populated with the current collection's item.
+//
+// This syntax use the #forEachNext method, that should be defined 
+// for the collection. This method return the next element of aCollection.
+//
+// This method is called by instruction "forEach: o [ ... ] "
+//    1) forEachNext is initially called with aObject = null
+//    3) This method should : 
+//       - Use aObject in order to retrieve the next item of the collection.
+//       - If end of collection is reached, just push false
+//       - else push aObject used for next call, push the next item and true
+Object virtual: forEachNext   // x coll -- y o true | false
+   ifNull: [ 1 self true return ] false ;
+
+Collection virtual: forEachNext 
+   #forEachNext self subclassResponsability ;
+
+Null method: forEachNext -- false
+   drop false ;
+
+// ****************************************************************************
+// forEachPrev(x)          ( x aCollection -- aObject item true | false )
+//    This method is called by instruction "revEach: o [ ... ] "
+//    Same as forEachNext, but the collection items are provided in
+//    reverse order
+Object     virtual: forEachPrev 
+   self forEachNext ;
+
+Collection virtual: forEachPrev 
+   #forEachPrev self subclassResponsability ;
+
+// ****************************************************************************
+// apply(r)               ( r x -- ... )
+//    Perform a runnable on each element of x
+//    For each element, #apply push current element, push r and perform it
+//    Example : 0 [ 1, 2, 3, 4, 5 ] apply(#+) -> 15
+Object method: apply(m)
+   | o | self forEach: o [ o m perform ] ;
+
+// ****************************************************************************
+// applyr(r)              ( r x -- ... )
+//    Same as #apply, but aRunnable is apply on items in reverse order
+//    Example: null [ "aa", "bb", "cc" ] applyr(#+) -> "ccbbaa"
+Object method: applyr(m)
+   | o | self revEach: o [ o m perform ] ;
+
+// ****************************************************************************
+// applyIf(p, r)    ( r p x -- ... )
+//    Apply r on each element that respond true to p
+//    Example : 0 [ 1, 2, 3, 4, 5] applyIf(#isEven, #+)   --> 6
+Object method: applyIf(p, r)
+| o | 
+   self forEach: o [ o p perform ifTrue: [ o r perform ] ] ;
+
+// ****************************************************************************
+// size              ( x -- n )
+//    Return x size ( O(n) ).
+//    This method can be redefined according to particular collection
+//    This basic implementation works for all collections, but traverse all
+//    the collection in order to compute size.
+Object virtual: size -- n
+   0 #[ drop 1 + ] self apply ;
+
+// ****************************************************************************
+// isEmpty           ( x -- b )
+//    Return true if the receiver is empty
+Object virtual: isEmpty -- b
+   false ;
+
+Null method: isEmpty -- b
+   true ;
+
+Collection method: isEmpty -- b
+   self size 0 &= ;
+
+// ****************************************************************************
+// notEmpty          ( x -- b )
+//    Return true if the receiver is not empty
+Object method: notEmpty -- b
+   self isEmpty not ;
+
+// ****************************************************************************
+// first/last        ( coll -- x | null )
+//    Return first/last element of the receiver, null if none
+Collection virtual: first -- x 
+   | o | null self forEach: o [ drop o return ] ;
+
+Collection virtual: last -- x
+   | o | null self revEach: o [ drop o return ] ;
+
+Collection virtual: second -- x
+| o | 
+   0 self forEach: o [ 1 + dup 2 &= ifTrue: [ drop o return ] ]
+   drop null ;
+
+// ****************************************************************************
+// reduce(r)         ( r x -- ... )
+//    Same as #apply, but push the first element of the collection on the stack
+//    as initial element.
+//    Return null if aCollection is empty.
+//    Example : [ 1, 2, 3, 4, 5 ] reduce(#+) --> 15
+Object method: reduce(m)
+| f o |
+	self isEmpty ifTrue: [ null return ]
+   self forEach: o [ f ifNull: [ 1 ->f o continue ] o m perform ] ;
+
+// ****************************************************************************
+// count(p)          ( x -- n )
+//    Count number of elements for which p return true
+Object method: count(t) -- n
+   0 self applyIf(t, #[ drop 1 + ]) ;
+
+// ****************************************************************************
+// detect(r, e)      ( e r coll -- x | null )
+//    Return first element for which r respond e
+//    Return null if none
+//    Example : [1, 2, 3, 4, 5 ] detect(#isEven, true) -> 2
+Object method: detect(r, e) -- x
+| o |
+   self forEach: o [ o r perform e == ifTrue: [ o return ] ] null ;
+
+// ****************************************************************************
+// include(e)        ( e x -- b )
+//    Return true if e is a member of the receiver 
+Object method: include -- b
+   #yourself self detect notNull ;
+
+// ****************************************************************************
+// occurrences(e)    ( e x -- n )
+//    Return number of occurences of aObject into the receiver
+Object method: occurrences(e) -- n
+| o |
+   0 self forEach: o [ o e == ifTrue: [ 1 + ] ] ;
+
+// ****************************************************************************
+// conform(p)        ( p x -- b )
+//    Return true if all elements of aCollection answer true to p
+Object method: conform(p) -- b
+   false p self detect isNull ;
+
+// ****************************************************************************
+// maxFor(r)         ( r coll -- x )
+//    Return element with max value returned when r is applied 
+Collection method: maxFor(r) -- x
+| f o e |
+   self isEmpty ifTrue: [ null return ]
+   self forEach: o [ 
+      f ifNull: [ 1 ->f o dup ->e r perform continue ] 
+      o r perform 2dup <= ifTrue: [ nip o ->e ] else: [ drop ]
+      ]
+   drop e ;
+
+// ****************************************************************************
+// minFor(r)         ( r coll -- x )
+//    Return element with min value returned when r is applied
+Collection method: minFor(r) -- x
+| f o e |
+   self isEmpty ifTrue: [ null return ]
+   self forEach: o [ 
+      f ifNull: [ 1 ->f o dup ->e r perform continue ] 
+      o r perform 2dup <= ifTrue: [ drop ] else: [ nip o ->e ] 
+      ]
+   drop e ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Collection comparisons
+// ****************************************************************************
+
+// ****************************************************************************
+// ==                ( coll coll -- b )
+//    Return true is two collections are equals, false otherwise
+Collection virtual: ==(c) -- b
+| o iterator |
+   c forEach: o [
+      iterator self forEachNext ifFalse: [ false return ]
+      o == ifFalse: [ drop false return ]
+      ->iterator
+      ]
+   iterator self forEachNext ifFalse: [ true return ]
+   drop drop false ;
+
+// ****************************************************************************
+// <=                ( coll coll -- b  )
+//    Return true c is <= to the receiver
+//    Compare each element 
+Collection virtual: <=(c) -- b
+| o p iterator |
+   c forEach: o [
+      iterator self forEachNext ifFalse: [ false return ]
+      ->p ->iterator
+      o p < ifTrue: [ true return ]
+      o p > ifTrue: [ false return ]
+      ]
+   true ;
+
+// ****************************************************************************
+Collection is: Comparable
+
+// ****************************************************************************
+
+   
+// ****************************************************************************
+// Arithmetics and collections
+// ****************************************************************************
+//    If elements respond to methods, reduce the collection
+Collection method: sum -- x
+   #+ self reduce dup ifNull: [ drop 0 ] ;
+
+Collection method: prod -- x
+   #* self reduce dup ifNull: [ drop 0 ] ;
+
+Collection method: and -- b
+   #and self reduce ;
+
+Collection method: or -- b
+   #or  self reduce ;
+
+Collection method: xor -- b
+   #xor self reduce ;
+
+// ****************************************************************************
+// avg            ( coll -- f )
+//    Return average of elements of a collection
+//    Return null if collection is empty
+Collection method: avg -- f
+   self isEmpty ifTrue: [ null return ]
+   self sum self size asFloat / ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Collections as dictionary
+// ****************************************************************************
+
+// ****************************************************************************
+// keyAt(aKey)       ( key coll -- aPair )
+//    Use collection as dictionnary
+//    Return [key, value ] into the dictionary
+//    Return null if none
+//    Exemple : [[ $aa, 2 ], [ $bb, [3, 4]], [ $cc, "aaaa"]] ] keyAt($bb) 
+//          --> [ $bb, [ 3, 4 ] ]
+Collection virtual: keyAt(aKey) -- aPair
+   self detect(#first, aKey) ;
+
+// ****************************************************************************
+// valueAt(aKey)     ( key coll -- x )
+//    Use collection as dictionnary
+//    Return object value at aKey 
+//    Return null if none
+//    Exemple : [[ $aa, 2 ], [ $bb, [3, 4]], [ $cc, "aaaa"]] ] valueAt($bb) 
+//          --> [ 3, 4 ]
+Collection virtual: valueAt(aKey) -- x
+   self keyAt(aKey) dup ifNotNull: [ second ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Output
+// ****************************************************************************
+
+// ****************************************************************************
+// <<                ( aStream aCollection -- aStream )
+//    Send aCollection to aStream
+Collection virtual: << 
+| f o |
+   '[' <<c
+   self forEach: o [ f ifNull: [ false ->f ] else: [ ", " << ] o << ] 
+   ']' <<c ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ null isEmpty ]
+test: [ 1.2 size 1 == ]
+
+test: [ 12 apply(#[ 1 + ]) 13 == ]
+test: [ 0 [ 1, 2, 3, 4, 5 ] apply(#[ drop 1 + ]) 5 == ]
+test: [ [ 1, 2, 3, 4, 5 ] reduce(#*) 120 == ]
+test: [ [ 1, 2, 3, 4, 5 ] count(#isOdd) 3 == ]
+test: [ [ 1, 2, 3, 4, 5 ] detect(#[ 4 mod ==0], true) 4 == ]
+
+test: [ [ 1, 2, 3, 4, 5 ] include(4) ]
+test: [ [ 1, 2, 3, 4, 5 ] include(6) not ]
+
+test: [ [ 2, 4, 6 ] conform(#isEven) ]
+test: [ [ 2, 4, 5 ] conform(#isEven) not ]
+
+test: [ [ 1, 3, 4, 5, 8, 2, 10, 3 ] maxFor(#yourself) 10 == ]
+test: [ [ 1, 3, 4, 5, 8, 2, 10, 3 ] minFor(#yourself)  1 == ]
+
+test: [ [ 1, 2, 3 ] [ 1, 2, 3 ] == ]
+test: [ [ 1, 2, 3 ] [ 1, 2, 4 ] == not ]
+test: [ [ 1, 2, 3, 4 ] [ 1 ] == not ]
+
+test: [ [ 1, 2, 3 ] [ 1, 2, 4 ] <= ]
+test: [ [ 1, 2, 4 ] [ 1, 2, 3 ] <= not ]
+test: [ [ 1, 2, 3 ] [ 1, 2, 3, 4 ] <= ]
+test: [ [ 1, 2, 3, 4 ] [ 1, 2, 3 ] <= not ]
+
+test: [ [ 1, 2, 3, 4, 5 ] sum 15 == ]
+test: [ [ 1, 2, 3, 4, 5 ] prod 120 == ]
+test: [ [ 1, 2, 3, 4, 5 ] avg 3 == ]
+
+test: [ [ true, true, true, true ] and ]
+test: [ [ true, true, false, true ] and not ]
+
+test: [ [ [ $aa, 1, 2 ], [ $bb, 2, 2 ], [ $cc, 3, 3 ] ] keyAt($bb) [ $bb, 2, 2 ] == ]
+
+
+// ****************************************************************************
+// End of Collection class
+// ****************************************************************************
+

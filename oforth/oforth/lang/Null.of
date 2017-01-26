@@ -1,0 +1,61 @@
+// ****************************************************************************
+// ****************************************************************************
+// Null class 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Null is the class of null object
+//    - null object represent ... nothing 
+//    - When objects are created, attributes are initialized with null value
+//    - Local variables are initialized with null value
+
+// ****************************************************************************
+// Object Class new: Null
+
+// ****************************************************************************
+// new                  ( Null -- null )
+//    null is the only instance of Null, so return null
+Null classMethod: new -- null
+   null ;
+
+// ****************************************************************************
+// isNull               ( x -- b )
+//    Return true if the top of the stack is null
+: isNull       // x -- b
+   null &= ;
+
+// ****************************************************************************
+// notNull              (  x -- b )
+//    Return true if the receiver is not null
+: notNull      // x -- b
+   isNull not ;
+
+// ****************************************************************************
+// #<<                  ( aStream null -- aStream )
+//    Send a printable version of null to a stream
+Null method: << 
+   "null" << ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ Null new null == ]
+test: [ null isNull ]
+test: [ 1 isNull not ]
+test: [ 1 notNull ]
+test: [ null null == ]
+test: [ 1 null <> ]
+test: [ null 1 <> ]
+
+
+// ****************************************************************************
+// End of Null class
+// ****************************************************************************
+

@@ -1,0 +1,82 @@
+// Oforth Chameneos 
+// See http://shootout.alioth.debian.org/
+//
+// oforth --P"chameneos(60000)" Chameneos.of  
+// oforth --P"chameneos(600000)" Chameneos.of  
+// oforth --P"chameneos(6000000)" Chameneos.of  
+//
+[ $blue, $red, $yellow ] Constant new: Colors
+
+[ $zero, $one, $two, $three, $four, $five, $six, $seven, $eight, $nine ]
+   Constant new: Numbers
+
+: spell { asString apply(#[ " " print asDigit 1 + Numbers at print ]) }
+
+: complement(c1, c2) 
+{
+   c1 c2    &= ifTrue: [ c1 return ]
+   c1 $blue &= ifTrue: [ c2 $red  &= ifTrue: [ $yellow return ] $red  return ]
+   c1 $red  &= ifTrue: [ c2 $blue &= ifTrue: [ $yellow return ] $blue return ]
+   c2 $blue &= ifTrue: [ $red return ]
+   $blue
+}
+
+: cham(id, color, meeting, resultChannel)
+{
+| res |
+   
+   0 0 while(true) [
+      [ id, color ] meeting send ifFalse: [ break ]
+      resultChannel receive dup ->res ifNull: [ break ]
+      1 +
+      res first ->color
+      res second ifTrue: [ swap 1 + swap ]
+      ]
+   Pair new
+}
+
+: meetingPlace(n, meeting, results)
+{
+| id1 id2 i |
+
+   n loop: i [
+      meeting receive dup first ->id1 second 
+      meeting receive dup first ->id2 second 
+      [ complement, id1 id2 &= ] dup
+      id1 results at send drop
+      id2 results at send drop
+      ]
+
+   meeting close
+   while(meeting isEmpty not) [ results at(meeting receive first) close ]
+}
+
+: meet(N, cols)
+{
+| meeting i results o |
+
+   printcr cols apply(#[ " " print print ]) printcr
+
+   ListBuffer init(cols size, #[ Channel new ]) dup freeze ->results
+
+   Channel new ->meeting 
+   #[ meetingPlace(N, meeting, results) ] &
+
+   0 ListBuffer new 
+   cols size loop: i [ #[ cham(i, i cols at, meeting, i results at) ] over add ]
+   mapParallel(#perform) forEach: o [ o first dup print o second spell printcr + ]
+   spell printcr
+}
+
+: chameneos(N)
+{
+| c1 c2 |   
+
+   Colors forEach: c1 [
+      Colors forEach: c2 
+        [ System.Out c1 << " + " << c2 << " -> " << complement(c1, c2) << cr ]
+     ]
+   meet(N, Colors)
+   meet(N, [ $blue,$red,$yellow,$red,$yellow,$blue,$red,$yellow,$red,$blue ])
+}
+

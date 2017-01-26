@@ -1,0 +1,225 @@
+// *****************************************************************************
+// *****************************************************************************
+// StringBuffer methods (Object->Collection->String->StringBuffer)
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+
+// StringBuffer implements mutable strings
+
+// *****************************************************************************
+// Class definition
+// *****************************************************************************
+// String Class new: StringBuffer
+StringBuffer is: Stream
+
+// *****************************************************************************
+// empty 
+//    Empty the string
+// Primitiv
+
+//*****************************************************************************
+// addChar(c)
+//    Add aChar at the end of aString
+// Native implement
+
+//*****************************************************************************
+// add(c)
+//    Add aChar at the end of aString
+StringBuffer method: add 
+   self addChar ;
+
+//*****************************************************************************
+// put(n, c)
+//    Put aChar (unicode code) at aInteger position
+StringBuffer method: put(i, c)
+| l r |
+   self left(i 1 -) ->l
+   self right(self size i -) ->r
+   self dup empty l apply(#<<c) dup add(c) r apply(#<<c) drop ;
+
+//*****************************************************************************
+// addAll(aCollection)
+//    Add all objects into aCollection to aStringBuffer
+StringBuffer method: addAll(s) 
+   self #<< s apply drop ;
+
+// *****************************************************************************
+// asString
+//    Return string representation of aObject
+Object virtual: asString -- s
+   StringBuffer new dup addAll(self) dup freeze ;
+
+// *****************************************************************************
+// asStringOfBase(n)
+//    Return string representation of the receiver using base n
+Integer method: asStringOfBase(n) -- s
+| p i s |
+   self abs ->p
+   0 while(p 0 <>) [ p n /mod ->p swap 1 + ] 
+
+   StringBuffer new ->s 
+   self 0 < ifTrue: [ '-' s addChar ]
+   loop: i [ dup 10 < ifTrue: [ '0' ] else: [ 10 - 'a' ] + s addChar ]
+   s isEmpty ifTrue: [ '0' s addChar ]
+   s dup freeze ;
+
+// *****************************************************************************
+// asStringIfError(throwEx)
+//    Convert a buffer of bytes into a string
+//    
+//    Bytes must conform to UTF8 encoding. If not : 
+//       - if throwEx is true, an exception is raised
+//       - If throwEx is false, the byte is converted into '?' char.
+Buffer method: asStringIfError(throwEx) -- s
+| s |
+   StringBuffer newSize(self size) ->s
+   1 while(dup self basicSize <= ) [
+      dup self utf8At dup ifNull: [
+         throwEx ifTrue: [ ExUTF8Encoding throw("UTF8 encoding error") ]
+         else: [ drop 0 '?' ]
+         ]
+      s add
+      + 1 +
+      ]
+   drop s dup freeze;
+
+// *****************************************************************************
+// asString
+//    Convert a buffer into a string
+//    Convert non UTF8 bytes into '?' character
+Buffer virtual: asString -- s 
+   false self asStringIfError ;
+
+// *****************************************************************************
+// asString
+//    Return self for strings
+String method: asString -- s
+   self ;
+
+// *****************************************************************************
+// asStringBuffer
+//    Creates a new stringbuffer from a string
+String method: asStringBuffer -- aStringBuffer
+   StringBuffer newSize(self size) self apply(#<<c) ;
+
+// *****************************************************************************
+// +(s) 
+//    Add two strings
+String method: +(s) -- s1 
+   StringBuffer newSize(self basicSize s basicSize + ) s << self << dup freeze ;
+
+// *****************************************************************************
+// charsAsString
+//    Convert a collection with unicode codes into a string
+Collection method: charsAsString -- s
+   StringBuffer newSize(self size) self apply(#<<c) dup freeze ;
+
+// *****************************************************************************
+// sortWith(aMethod)
+//    Sort characters into a string using aMethod test
+String method: sortWith(m) -- s
+| l |
+   self size dup ListBuffer newSize dup addAll(self) ->l
+   1 l m quickSortFromTo l charsAsString ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Related definitions
+// *****************************************************************************
+
+// *****************************************************************************
+// toLower
+//    Return string with lower chars of the receiver
+String method: toLower -- s
+   StringBuffer newSize(self basicSize) 
+   self apply(#[ toLower <<c ]) dup freeze ;
+
+// *****************************************************************************
+// toUpper 
+//    Return string with upper chars of the receiver
+String method: toUpper -- s
+   StringBuffer newSize(self basicSize) 
+   self apply(#[ toUpper <<c ]) dup freeze ;
+
+// *****************************************************************************
+// wordsWith(aChar) 
+//    Return list of words separated by aChar into the receiver
+String method: wordsWith(c) -- aList
+| ch d |
+   ListBuffer new self isEmpty ifTrue: [ dup freeze return ]
+   StringBuffer new
+   self forEach: ch [
+      ch dup ->d c == ifTrue: [ strip over add StringBuffer new continue ]
+      d <<c
+      ]
+   strip over add dup freeze ;
+
+// *****************************************************************************
+// words             ( aString -- aList )
+//    Return list of words from aString
+String method: words -- aList
+| ch d |
+   ListBuffer new self isEmpty ifTrue: [ dup freeze return ]
+   StringBuffer new
+   self forEach: ch [
+      ch dup ->d isLwSpace ifTrue: [
+         dup notEmpty ifTrue: [ strip over add StringBuffer new ]
+         continue
+         ]
+      d <<c
+      ]
+   dup notEmpty ifTrue: [ strip over add ] else: [ drop ] dup freeze ;
+
+// *****************************************************************************
+// unwords           ( aList -- aString )
+//    Return a string with all objects into aList separated by space
+Collection method: unwords -- s
+| o f |
+   StringBuffer new
+   self forEach: o [ f ifNull: [ 1 ->f ] else: [ ' ' <<c ] o << ]
+   dup freeze ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Tests
+// *****************************************************************************
+test: [ StringBuffer new 'a' <<c 'b' <<c "cde" << "abcde" == ]
+test: [ StringBuffer new "abcde" << "abcde" == ]
+test: [ StringBuffer new  dup addAll([1.2, 12, "abcdef"]) "1.212abcdef" == ]
+test: [ StringBuffer new 12 <<wjpb(6, Stream.JUSTIFY_RIGHT, 5, 16) " 0000c" == ]
+test: [ 10 seq asString "12345678910" == ]
+test: [ [ "aaa", "bbb", "ccc" ] asString "aaabbbccc" == ]
+test: [ "aa" $aa == ]
+
+test: [ [ "abc", "def", "ghi"] sum "abcdefghi" == ]
+test: [ "abcde" toUpper "ABCDE" == ]
+test: [ "aa;;bb;cc;;dd;" wordsWith(';') [ "aa", "", "bb", "cc", "", "dd", "" ] == ]
+test: [ "\taa  \t bb \t\t     cc   dd \t " words [ "aa", "bb", "cc", "dd"] == ]
+
+test: [ "abcde" extract(3,4) "cd" == ]
+test: [ "aBcDe"      filter(#isLower) "ace" == ]
+test: [ "abcdeabcde" filter(#['a' <>]) "bcdebcde" == ]
+test: [ "abcde" reverse "edcba" == ]
+test: [ "aaBBccDDee" groupWith(#isUpper) [ "aa", "BB", "cc", "DD", "ee" ] == ]
+test: [ "abcdefghij" splitBy(3) [ "abc", "def", "ghi", "j" ] == ]
+
+test: [ "-10" asInteger -10 == ]
+test: [ "FFFF" asIntegerOfBase(16) 0xFFFF == ]
+test: [ "1.2e2" asFloat 1.2e2 == ]
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// End of StringBuffer class
+// *****************************************************************************
+

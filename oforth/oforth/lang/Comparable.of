@@ -1,0 +1,65 @@
+// ****************************************************************************
+// ****************************************************************************
+// Comparable Property 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Comparable property implements objects that can be compared and sorted
+
+// #<= implementation is required for a class to be comparable
+// "a b <=" must return true if a is lesser or equal to b, false otherwise
+
+// ****************************************************************************
+// Comparable definition
+// ****************************************************************************
+Property new: Comparable
+Comparable requires: <=
+
+// ****************************************************************************
+// isComparable            ( x -- b )
+//    Return true if the receiver is comparable
+Object    virtual: isComparable -- b
+   false ;
+
+Comparable method: isComparable -- b
+   true ;
+
+// ****************************************************************************
+// Comparisons 
+//		Compare 2 comparables and return true or false
+//    These methods cannot be redefined into subclasses.
+Comparable method: >    // aComparable aComparable -- b
+   self <= not ;
+
+Comparable method: <(c) // aComparable aComparable -- b
+   self c == not c self <= and ;
+
+Comparable method: >=   // aComparable aComparable -- b
+   self < not ;
+
+// ****************************************************************************
+// min and max 
+Comparable method: min(a)  // aComparable aComparable -- aComparable
+   self a <= ifTrue: [ self ] else: [ a ] ;
+
+Comparable method: max(a)  // aComparable aComparable -- aComparable
+   self a <= ifTrue: [ a ] else: [ self ] ;
+
+// ****************************************************************************
+// between(a, b) -- aBoolean
+//		Return true if (a <= self <= b), false otherwise
+//    Example : 1.2 between(1.1, 1.3) -> true
+Comparable method: between(x, y) -- b
+   self y <= x self <= and ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// End of Comparable property
+// ****************************************************************************
+

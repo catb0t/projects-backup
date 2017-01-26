@@ -1,0 +1,207 @@
+// ****************************************************************************
+// ****************************************************************************
+// System class
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// System class gather all informations about the system state and
+// communication with OS.
+
+// Defines errors that can be returned from OS
+  0 const: ENOERROR
+
+100 const: ERESCLOSED
+101 const: ETIMEOUT
+
+300 const: ESOCKCREATE
+301 const: ESOCKBIND
+302 const: ESOCKPORT
+303 const: ESOCKLISTEN
+304 const: ESOCKACCEPT
+305 const: ESOCKOPT
+306 const: ESOCKHOST
+307 const: ESOCKCONNECT
+308 const: ESOCKREAD
+309 const: ESOCKWRITE
+310 const: ESOCKSELECT
+
+// ****************************************************************************
+// System definition
+// ****************************************************************************
+// Object Class new: System
+
+
+// ****************************************************************************
+// System input/output
+// ****************************************************************************
+
+// ****************************************************************************
+// Standard input/output are constants : 
+// 	- System.In
+//		- System.Out
+//		- System.Err
+
+// ****************************************************************************
+// print/println/emit/.     ( x -- )
+//    Print aObject on stantard output
+Object method: print
+   System.Out self <- ;
+
+Object method: println
+   System.Out self << cr ;
+
+Integer method: emit
+   System.Out self <<c drop ;
+
+: . print ' ' emit ;
+
+// ****************************************************************************
+// printcr                 ( -- )
+//    Print new line on stdout
+: printcr
+   System.Out cr ;
+
+// ****************************************************************************
+// .s                      ( -- )
+//    View data stack
+: .s 
+| i o |
+   .depth ifZero: [ "Empty" println return ]
+
+   .depth loop: i [ 
+		i pick -> o
+		System.Out '[' <<c i << "] (" << o class << ") " << o << cr 
+		] ;
+
+// ****************************************************************************
+// .l
+//    View data stack on one line, without object classes
+: .l
+| i |
+   .depth ifZero: [ "Empty " print return ]
+   .depth 1 -1 step: i [ i pick . "|" . ] printcr ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Ticks and Times
+// ****************************************************************************
+
+// ****************************************************************************
+// microSleep(n)       ( n System -- )
+//    Sleep current thread for the receiver microSeconds
+System classMethod: microSleep
+   sleepTask ;
+
+// ****************************************************************************
+// sleep               ( n System -- )
+//    Sleep current thread for the receiver milliseconds 
+System classMethod: sleep 
+   1000 * sleepTask ;
+
+// ****************************************************************************
+// getTick             ( System -- n )
+//    Get timestamp with 1 microsecond precision.
+//    Accuracy is OS dependent.
+//    
+//    Remarks:
+//    --------
+//    getTick is used to calculate duration for small
+//    periods of time (a method bench for instance). Substracting
+//    two ticks will return duration between the two events.
+//
+// Native class method
+
+// ****************************************************************************
+// getTimeAndLocal     ( System -- dst minutes micros )
+//    Get current utc time with 1 microsecond precision.
+//    Current time returned is number of microseconds since 01/01/1970 
+//		Are also returned : 
+//    	- Current number of minutes between utc and local time (local time - utc time)
+//			- Daylight saving time flag (true if currently set)
+//
+//    Accuracy is OS dependent (often millisecond).
+// Native class method
+
+// ****************************************************************************
+// getTime             ( System -- n )
+//    Get current utc time with 1 microsecond precision.
+//    Current time returned is number of microseconds since 01/01/1970 
+System classMethod: getTime -- n
+   self getTimeAndLocal nip nip ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Memory 
+// ****************************************************************************
+
+// ****************************************************************************
+// memSize             ( System -- )
+//    Return sizes of current dynamic memory allocation 
+//     - allocated memory (Kbytes)
+//     - used memory (Kbytes)
+// Native method
+
+// ****************************************************************************
+// mem                 ( -- )
+//    Show memory allocation 
+: mem 
+   System memSize 
+   System.Out "Memory used      (Ko) : " << swap <<
+            "\nMemory allocated (Ko) : " << swap << cr ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// System calls
+// ****************************************************************************
+
+// ****************************************************************************
+// getEnv(aString)      ( s1 System -- s2 | null )
+//    Return value of variable which name is aString
+//    Return null if none
+// Native class method
+
+// ****************************************************************************
+// cmd(aString)         ( s System -- )
+//    Excecute OS command into aString
+//    Return command return code.
+// Native class method
+
+// ****************************************************************************
+// exit(aInteger)       ( n System -- )
+//    Return to OS with aInteger return value
+//    This method can only be called by main task.
+// Native class method
+
+// ****************************************************************************
+// bye                        ( -- )
+//    Quit Oforth with no errors
+: bye 
+   0 System exit ;
+
+// ****************************************************************************
+// bench                ( r -- )
+//    Perform the receiver
+//    Print number of microseconds elapsed for the receiver to perform
+Runnable method: bench
+| tick |
+   System getTick ->tick
+	self perform 
+	System getTick tick - println ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// End of System class
+// ****************************************************************************
+

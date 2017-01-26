@@ -1,0 +1,499 @@
+// ****************************************************************************
+// ****************************************************************************
+// Date class 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Date implements an object representing a date (yy/mm/dd) and 
+// a time (hh:mi:ss:micro)
+
+// ****************************************************************************
+// Date definition
+// ****************************************************************************
+Object Class new: Date(tick, bias, dst, calendar, yy, mm, dd, hh, mi, ss, micro)
+
+// ****************************************************************************
+// Date constants
+// ****************************************************************************
+00 const: Date.GREGORIAN
+
+01 const: Date.JANUARY
+02 const: Date.FEBRUARY
+03 const: Date.MARCH
+04 const: Date.APRIL
+05 const: Date.MAY
+06 const: Date.JUNE
+07 const: Date.JULY
+08 const: Date.AUGUST
+09 const: Date.SEPTEMBER
+10 const: Date.OCTOBER
+11 const: Date.NOVEMBER
+12 const: Date.DECEMBER
+
+ 0 const: Date.SUNDAY
+ 1 const: Date.MONDAY
+ 2 const: Date.TUESDAY
+ 3 const: Date.WEDNESDAY
+ 4 const: Date.THURSDAY
+ 5 const: Date.FRIDAY
+ 6 const: Date.SATURDAY
+
+1000000                   const: Date.MicroIntoSecond
+Date.MicroIntoSecond 60 * const: Date.MicroIntoMinute
+Date.MicroIntoMinute 60 * const: Date.MicroIntoHour
+Date.MicroIntoHour   24 * const: Date.MicroIntoDay
+
+[ "Sun" , "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" ] const: Date.Days
+
+[ "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec" ]
+   const: Date.Months
+
+[ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ] const: Date.DaysMonth
+
+[ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 ]
+   const: Date.DaysInYearByMonth
+
+
+// ****************************************************************************
+// Some functions
+// ****************************************************************************
+
+// ****************************************************************************
+// Date.IsLeapYear(year) 
+//    Return true if year is a leap year, false otherwise
+: Date.IsLeapYear(year) -- b
+   year   4 mod 0 == ifFalse: [ false return ]
+   year 400 mod 0 == ifTrue:  [ true return ]
+   year 100 mod 0 == not ;
+
+// ****************************************************************************
+// Date.DaysInMonth(aYear, aMonth) -- n
+//    Return number of days into aMonth for aYear
+//    Return null if aMonth is not between 1 and 12.
+: Date.DaysInMonth(aYear, aMonth) -- n
+   Date.DaysMonth at(aMonth) 
+   Date.IsLeapYear(aYear) aMonth Date.FEBRUARY == and ifTrue: [ 1 +  ] ;
+
+// ****************************************************************************
+// Date.DaysInYear(aYear) -- n
+//    Return number of days in aYear
+: Date.DaysInYear(aYear) -- n
+   365 Date.IsLeapYear(aYear) ifTrue: [ 1 + ] ;
+
+// ****************************************************************************
+// Date.DaysForYears(aYear) -- n
+//    Return sum of days from beginning of year 1 to end of year aYear
+: Date.DaysInYears(y) -- n
+   365 y * y 4 / + y 100 / - y 400 / + ;
+
+// ****************************************************************************
+// Date.GregorianToJulianDay(y, m, d) -- n
+//    Calculates julian day from gregorian date (y/m/d)
+//    Julian day 0 is -4713/11/24 
+: Date.GregorianToJulianDay(y, m, d) -- n
+| mq |
+   m 2 <= ifTrue: [ -1 ] else: [ 0 ] ->mq
+   y 4800 + mq + 1461 * 4 /
+   m 2 - mq 12 * - 367 * 12 / +
+   y 4900 + mq + 100 / 3 * 4 / -
+   d + 32075 - ;
+
+// ****************************************************************************
+// Date.JulianDayToGregorian(jd) -- d m y 
+//    Calculates gregorian date from julian day
+//    Return d, m and y on the stack
+: Date.JulianDayToGregorian(jd) -- d m y 
+| n i j |
+
+   jd 68569 + ->jd 
+   jd 4 * 146097 / ->n
+   jd 146097 n * 3 + 4 / - ->jd
+   jd 1 + 4000 * 1461001 / ->i
+   jd 1461 i * 4 / - 31 + ->jd
+   jd 80 * 2447 / ->j
+   jd 2447 j * 80 / - 
+   j 11 / ->jd
+   j 2 + 12 jd * - 
+   n 49 - 100 * i + jd + ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Date creation
+// ****************************************************************************
+
+// ****************************************************************************
+// initialize(tick, bias, dst, cal)
+//    Basic initialization for a Date with : 
+//       - tick : number of microseconds since 1970/01/01
+//       - bias : Bias of the receiver with UTC time into minutes
+//       - dst  : Daylight saving time flag (true if currently set)
+//       - cal  : Calendar used
+//    This version only support Gregorian calendar.
+Date virtual: initialize(tick, bias, dst, cal)
+| full |
+
+   cal Date.GREGORIAN == 
+      ifFalse: [ ExRuntime throw("Calendar not yet supported", cal) ]
+
+   tick := tick
+   bias := bias
+	dst  := dst
+   cal  := calendar
+   tick bias dst ifTrue: [ 60 + ] Date.MicroIntoMinute * + ->full
+
+   full Date.MicroIntoDay    mod dup Date.MicroIntoHour   / := hh
+        Date.MicroIntoHour   mod dup Date.MicroIntoMinute / := mi
+        Date.MicroIntoMinute mod dup Date.MicroIntoSecond / := ss
+        Date.MicroIntoSecond mod := micro
+
+   Date.JulianDayToGregorian(full Date.MicroIntoDay / 2440588 + )
+   := yy := mm := dd ;
+
+// ****************************************************************************
+// newBasic(tick, bias, dst, cal)
+//    Create a new date 
+Date classMethod: newBasic -- aDate 
+   super new ;
+
+// ****************************************************************************
+// newDateTime(y, m, d, hh, mm, ss)
+//    Create a new date and time using gregorian calendar
+//    Number of micro second is set to 0 
+Date classVirtual: newDateTime(y, m, d, hh, mm, ss) -- aDate
+   Date.GREGORIAN false 0
+
+   // Calculate number of micro-seconds since 1970/01/01
+   Date.GregorianToJulianDay(y, m, d) 2440588 - Date.MicroIntoDay * 
+   hh dup ifNull: [ drop 0 ] 3600 * 
+   mm dup ifNull: [ drop 0 ] 60 * + 
+   ss dup ifNull: [ drop 0 ]+  
+   Date.MicroIntoSecond * + self newBasic ;
+
+// ****************************************************************************
+// newDate(y, m, d)
+//    Return new date using gregorian calendar
+//    Number of hours, minutes, seconds and microseconds are set to 0.
+Date classVirtual: newDate(y, m, d) -- aDate 
+   self newDateTime(y, m, d, 0, 0, 0) ;
+
+// ****************************************************************************
+// asDateUTC
+//    Convert an integer number of microseconds into a date
+//    No bias, no dst flag 
+Integer method: asDateUTC -- aDate 
+   Date newBasic(self, 0, false, Date.GREGORIAN) ;
+
+// ****************************************************************************
+// asDate
+//    Convert an integer number of microseconds into a date
+//    Local bias and dst flag are used.
+Integer method: asDate -- aDate
+   Date.GREGORIAN System getTimeAndLocal drop self Date newBasic ;
+
+// ****************************************************************************
+// asDate
+//    Convert tuple [ year, month, day, hh, mm, ss] or [year, month, day] as date
+//    Example : [ 1970, 01, 01 ] asDate
+List method: asDate -- aDate
+   self size 3 < ifTrue: [ ExRuntime throw("Can't convert to date", self) ]
+   Date newDateTime(self at(1), self at(2), self at(3), 
+                    self at(4), self at(5), self at(6)) ;
+
+// ****************************************************************************
+// new/now 
+//    Return current date into local or GMT time timezone
+Date classVirtual: new -- aDate
+   Date.GREGORIAN System getTimeAndLocal Date newBasic ;
+
+Date classMethod: now -- aDate
+   self new ;
+
+Date classMethod: nowUTC -- aDate
+   System getTime asDateUTC ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Date attributes and basic operations
+// ****************************************************************************
+
+// ****************************************************************************
+// tick
+//    Return number of microseconds since 1970/01/01 GMT
+Date method: tick -- n
+   @tick ;
+
+// ****************************************************************************
+// bias 
+//    Return bias of the receiver with UTC time into minutes
+Date method: bias -- n
+   @bias ;
+
+// ****************************************************************************
+// add(aDuration)
+//    Add aDuration to the receiver and return new date
+//    aDuration is the number of micro seconds to be added
+//    aDuration can be a negative number
+//
+//    Bias and dst flag and calendrar of the receiver are used.
+Date method: add(aDuration) -- aDate
+	Date newBasic(@tick aDuration +, @bias, @dst, @calendar) ;
+
+// ****************************************************************************
+// microSecond
+// addMicroSeconds(ms)
+//    Return number of microseconds for aDate
+Date method: microSecond -- n
+   @micro ;
+
+Date method: addMicroSeconds -- aDate
+   self add ;
+
+// ****************************************************************************
+// second 
+// addSeconds(s)
+//    Return number of seconds for aDate
+Date method: second -- aInteger
+   @ss ;
+
+Date method: addSeconds    // ( aInteger aDate -- aDate )
+   Date.MicroIntoSecond * self add ;
+
+// ****************************************************************************
+// minute
+// addMinutes(mi)
+//    Return number of minutes for aDate
+//    If set, bias used used, so return local value.
+Date method: minute -- n
+   @mi ;
+
+Date method: addMinutes    // ( aInteger aDate -- aDate )
+   Date.MicroIntoMinute * self add ;
+
+// ****************************************************************************
+// hour
+// addHours(hh)
+//    Return number of hours for aDate
+//    If set, bias used used, so return local value.
+Date method: hour -- n 
+   @hh ;
+
+Date method: addHours      // ( aInteger aDate -- aDate )
+   Date.MicroIntoHour * self add ;
+
+// ****************************************************************************
+// day 
+// addDays(dd)
+//    Return day in month for aDate
+Date method: day -- n 
+   @dd ;
+
+Date method: addDays       // ( aInteger aDate -- aDate )
+   Date.MicroIntoDay * self add ;
+
+// ****************************************************************************
+// month
+//    Return month in year for aDate
+Date method: month -- n 
+   @mm ;
+
+// ****************************************************************************
+// year 
+//    Return year for aDate
+Date method: year -- n 
+   @yy ;
+
+// ****************************************************************************
+// today
+//    Return current local date with 00:00:00:000000 
+Date classMethod: today -- aDate
+| d | 
+   self new ->d
+   Date newDate(d year, d month, d day) ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Date operations
+// ****************************************************************************
+
+// ****************************************************************************
+// julianDay
+//    Return julian day of the reciever
+//    This version only uses GREGORIAN dates
+Date method: julianDay -- n
+   @calendar Date.GREGORIAN == 
+      ifFalse: [ ExRuntime throw("Calendar not yet supported", @calendar) ]
+
+   Date.GregorianToJulianDay(@yy, @mm, @dd) ;
+
+// ****************************************************************************
+// - 
+//    Return number of days between two dates
+Date method: -    // (aDate aDate -- n )
+   julianDay self julianDay - ;
+
+// ****************************************************************************
+// firstDayOfMonth
+//    Return date that represents the first day of the month of the receiver
+Date method: firstDayOfMonth -- n 
+   Date newDate(@yy, @mm, 01) ;
+
+// ****************************************************************************
+// daysLeftInMonth
+//    Return number of days in month after the receiver
+Date method: daysLeftInMonth -- n 
+   Date.DaysInMonth(@yy, @mm) @dd - ;
+
+// ****************************************************************************
+// dayOfYear
+//    Return day of year for aDate
+Date method: dayOfYear -- n
+   Date.DaysInYearByMonth at(@mm) @dd +
+   Date.IsLeapYear(@yy) @mm Date.MARCH >= and ifTrue: [ 1 + ] ;
+
+// ****************************************************************************
+// daysLeftInYear
+//    Return number of days in year after the receiver
+Date method: daysLeftInYear -- n
+   Date.DaysInYear(@yy) self dayOfYear - ;
+
+// ****************************************************************************
+// dayOfWeek
+//    Return day of week for aDate
+//    Return day from 0 = Date.SUNDAY to 6 = Date.SATURDAY
+Date method: dayOfWeek -- n
+| y m |
+   14 @mm - 12 / @yy over - ->y 
+   12 * @mm + 2 - ->m
+   @dd Date.DaysInYears(y) + 31 m * 12 / + 7 mod ;
+
+// ****************************************************************************
+// weekOfYear
+//    Return week into the year for the receiver.
+//    Week is returned as tuple [ week, year ] 
+//    Example : [ 2014, 12, 28 ] asDate weekOfYear --> [ 52, 2014 ]
+//    Example : [ 2014, 12, 29 ] asDate weekOfYear --> [ 01, 2015 ]
+Date method: weekOfYear -- [ aWeek, aYear ]
+| n m j i l w y |
+   14 @mm - 12 / @yy 4800 + over - Date.DaysInYears ->n
+   @mm swap 12 * + 3 - ->m
+   @dd 153 m * 2 + 5 / + n + 32045 - ->j
+   j 31741 + j 7 mod - 146097 mod 36524 mod 1461 mod ->i
+   i 1460 / ->l
+   i l - 365 mod l + 7 / 1 + ->w
+   @yy @mm  1 == w 52 >= and ifTrue: [ 1 - ]
+       @mm 12 == w  2 <= and ifTrue: [ 1 + ] 
+   ->y
+   [ w, y ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Date conversions and streams
+// ****************************************************************************
+
+// ****************************************************************************
+// asInteger
+//    Return julian day
+Date method: asInteger -- n 
+   self julianDay ;
+
+// ****************************************************************************
+// asList
+//    Return a date as list
+Date method: asList -- aList 
+   [ @yy, @mm, @dd, @hh, @mi, @ss ] ;
+
+// ****************************************************************************
+// == 
+//    Return true if the two dates are equals
+Date method: == -- b
+   tick @tick == ;
+
+// ****************************************************************************
+// <= 
+//    Return true aDate1 <= aDate2
+Date method: <= -- b 
+   tick @tick <= ;
+
+// ****************************************************************************
+// Date is comparable
+Date is: Comparable
+
+// ****************************************************************************
+// <<
+//    Send aDate into a Stream
+Date virtual: <<
+   self year   <<wjp(0, Stream.JUSTIFY_LEFT, 4) '-' <<c 
+   self month  <<wjp(0, Stream.JUSTIFY_LEFT, 2) '-' <<c 
+   self day    <<wjp(0, Stream.JUSTIFY_LEFT, 2) BL  <<c
+   self hour   <<wjp(0, Stream.JUSTIFY_LEFT, 2) ':' <<c 
+   self minute <<wjp(0, Stream.JUSTIFY_LEFT, 2) ':' <<c 
+   self second <<wjp(0, Stream.JUSTIFY_LEFT, 2) ',' <<c
+   self microSecond 1000 / <<wjp(0, Stream.JUSTIFY_LEFT, 3) ;
+
+// ****************************************************************************
+// <<ref 
+//    Send aDate into a Stream as reference date
+Date virtual: <<ref
+   Date.Days at(self dayOfWeek 1 +) << ", " <<
+   @dd <<wjp(0, Stream.JUSTIFY_LEFT, 2) BL  <<c
+   Date.Months at(@mm) << BL <<c
+   @yy <<wjp(0, Stream.JUSTIFY_LEFT, 4) BL  <<c
+   @hh <<wjp(0, Stream.JUSTIFY_LEFT, 2) ':' <<c 
+   @mi <<wjp(0, Stream.JUSTIFY_LEFT, 2) ':' <<c 
+   @ss <<wjp(0, Stream.JUSTIFY_LEFT, 2) ;
+
+// ****************************************************************************
+// <<Json
+//    Send date as list for json format
+Date method: <<Json 
+   self asList <<Json ;
+
+// ****************************************************************************
+
+   
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ Date.IsLeapYear(2000) ]
+test: [ Date.IsLeapYear(2004) ]
+test: [ Date.IsLeapYear(2014) not ]
+test: [ Date.IsLeapYear(2100) not ]
+test: [ Date.DaysInMonth(2014, Date.FEBRUARY) 28 == ]
+test: [ Date.DaysInMonth(2012, Date.FEBRUARY) 29 == ]
+
+test: [ Date.GregorianToJulianDay(-4713, 11, 24)       0 == ]
+test: [ Date.GregorianToJulianDay( 1582, 10, 15) 2299161 == ]
+test: [ Date.GregorianToJulianDay( 1970, 01, 01) 2440588 == ]
+test: [ 0 asDateUTC julianDay 2440588 == ]
+test: [ [ 2000, 03, 01 ] asDate dayOfYear          61 == ] 
+test: [ [ 2000, 03, 01 ] asDate daysLeftInYear    305 == ]
+test: [ [ 2014, 08, 15 ] asDate dayOfWeek Date.FRIDAY == ]
+
+test: [ 0 asDateUTC [1970, 1, 1] asDate == ]
+test: [ [ 2014, 08, 15] asDate firstDayOfMonth [ 2014, 08, 01 ] asDate == ]
+test: [ [ 1970, 01, 01] asDate addDays(10) [1970, 01, 11] asDate == ]
+test: [ [ 2000, 02, 28] asDate addDays(02) [2000, 03, 01] asDate == ]
+test: [ [ 2100, 02, 28] asDate addDays(02) [2100, 03, 02] asDate == ]
+test: [ [ 2000, 03, 01] asDate [2000, 02, 28] asDate - 2 == ]
+
+test: [ [ 2014, 12, 28 ] asDate weekOfYear second 2014 == ]
+test: [ [ 2014, 12, 29 ] asDate weekOfYear second 2015 == ]
+
+
+// ****************************************************************************
+// End of Date class
+// ****************************************************************************
+

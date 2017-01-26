@@ -1,0 +1,82 @@
+// ****************************************************************************
+// ****************************************************************************
+// LANG PACKAGE
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+//
+// This package loads all features required to have a runnable oforth system.
+
+// ****************************************************************************
+// Package signature
+// ****************************************************************************
+[ 
+   [ $name, "lang" ], 
+   [ $version, "V0.9.21" ],
+   [ $state, $NotStable ],
+   [ $directory, "lang" ],
+   [ $dependencies, [ ] ],
+   [ $author, "Franck Bensusan" ],
+   [ $contributors, [ ] ],
+   [ $url, "www.oforth.com" ],
+   [ $license, "BSD" ]
+]
+
+// ****************************************************************************
+// Package files
+// ****************************************************************************
+[
+// Basic classes and properties
+   "Object.of",
+   "Boolean.of",
+   "Null.of",
+   "Exception.of",
+   "Comparable.of",
+   "Runnable.of",
+   "Word.of",
+   "Block.of",
+   "Number.of",
+   "Stream.of",
+   "Integer.of",
+   "Char.of",
+   "Float.of",
+   "System.of",
+
+// ****************************************************************************
+// Collections
+// ****************************************************************************
+   "collect/Collection.of",
+   "collect/Indexable.of",
+   "collect/Interval.of",
+   "collect/Pair.of",
+   "collect/Buffer.of",
+   "collect/MemBuffer.of",
+   "collect/Structure.of",
+   "collect/List.of",
+   "collect/Json.of",
+   "collect/ListBuffer.of",
+   "collect/String.of",
+   "collect/Symbol.of",
+   "collect/StringBuffer.of",
+   "collect/Set.of",
+
+// ****************************************************************************
+// Resources
+// ****************************************************************************
+   "File.of",
+   "resource/Resource.of",
+   "resource/Console.of",
+   "resource/Channel.of",
+   "resource/Task.of",
+   "resource/TCPSocket.of",
+   "resource/TCPSocketServer.of",
+   "resource/TCPSocketClient.of"
+]
+
+// ****************************************************************************
+// End of lang package
+// ****************************************************************************
+

@@ -1,0 +1,9 @@
+{
+	"name": "iter",
+	"authors": [
+		"cat"
+	],
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2016, cat",
+	"license": "gpl"
+}

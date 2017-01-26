@@ -1,0 +1,6 @@
+#lang racket
+(define (logn n x)
+  (/ (log x) (log n)))
+
+(define (string-count key-func str)
+  (length (filter key-func str)))

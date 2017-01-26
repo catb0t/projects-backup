@@ -1,0 +1,262 @@
+// ****************************************************************************
+// ****************************************************************************
+// Integer class 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Integer implements integers numbers.
+// Oforth implements arbitrary-precision integers.
+
+// ****************************************************************************
+// Integer definition
+// ****************************************************************************
+// Number Class new: Integer
+
+// ****************************************************************************
+// <=                   ( n1 n2 -- b )
+//    Compare two integers.
+//    Example : 1 2 <= --> true
+// Native method
+
+// ****************************************************************************
+// +(aInteger)          ( n1 n2 -- b3 )
+//    Return aInteger + self 
+// Native method
+
+// ****************************************************************************
+// -(aInteger)          ( n1 n2 -- n3 )
+//    Return aInteger - self
+// Native method
+
+// ****************************************************************************
+// *(aInteger)          ( n1 n2 -- n3 )
+//    Return aInteger * self
+// Native method
+
+// ****************************************************************************
+// /(aInteger)          ( n1 n2 -- n3 )
+//    Return aInteger / self
+// Native method
+
+// ****************************************************************************
+// mod(aInteger)        ( n1 n2 -- remainder )
+//    Return the remainder of the division of two integers
+//    Exemple : 9 2 mod -> 1
+// Native method
+
+// ****************************************************************************
+// /mod                 ( n1 n2 -- remainder quotient )
+//    Return a mod b and a / b
+//    Exemple : 9 2 /mod -> 1 4 
+// Native method
+
+// ****************************************************************************
+// new                  ( Integer -- 0 )
+//    Just return 0
+Integer classMethod: new -- 0
+   0 ;
+
+// ****************************************************************************
+// isInteger            ( n -- b )
+//    Return true if the receiver is an natural number
+Object  virtual: isInteger -- b
+   false ;
+
+Integer method: isInteger -- b
+   true ;
+
+// ****************************************************************************
+// asInteger            ( n -- n )
+//    Return the receiver as a natural number
+Integer method: asInteger -- n
+   self ;
+
+// ****************************************************************************
+// isMutiple(n) 
+//    Return true if the receiver is a multiple of n
+Integer method: isMultiple(n) -- b
+   self n mod 0 &= ;
+
+// ****************************************************************************
+// isEven/isOdd         ( n -- b )
+//    Return true if the number is even
+// Native method
+Integer method: isOdd -- b
+   self isEven not ;
+
+// ****************************************************************************
+// gcd                  ( n1 n2 -- n3 )
+//    Example : 128 96 gcd --> 32
+Integer method: gcd     // n1 n2 -- n3
+   self while ( dup ) [ tuck mod ] drop ;
+
+// ****************************************************************************
+// lcm                  ( n1 n2 -- n3 )
+//    lcm = n*p/gcd
+//    Example : 128 96 lcm --> 384
+Integer method: lcm  // n1 n2 -- n3
+   dup self * swap self gcd / ;
+
+// ****************************************************************************
+// pow                  ( n a -- a^n )
+//    Returns aNumber ^ self
+Integer method: pow(base) -- n^base
+   self ifZero: [ 1 return ]
+   self 1 &= ifTrue: [ base return ]
+   self 0 <  ifTrue: [ 1.0 base / self neg pow return ]
+
+   1 self while ( dup 0 > ) [ 
+      dup isEven ifFalse: [ swap base * swap ] 
+      2 / base base * ->base
+      ]
+   drop ;
+
+// ****************************************************************************
+// ^                    ( n a -- a^n )
+//    Return second ^ top
+#pow alias: ^
+
+// ****************************************************************************
+// nsqrt                ( n1 -- n2 )
+//    Calculate integer x / x*x <= self and (x+1)*(x+1) > self
+Integer method: nsqrt -- n
+| y |
+   self 0 < ifTrue: [ "Math error" ExRuntime throw ]
+   self dup 1 <= ifTrue: [ return ]
+   bitRight(1) 
+   while( self over / dup ->y over < ) [ y + bitRight(1) ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Operations on bits
+// ****************************************************************************
+
+// ****************************************************************************
+// bitAnd(n) -- n1
+//    Perform bit and between aInteger and the receiver
+//    Example : 0xFF 0x12 bitAnd --> 0x12
+// Native method
+
+// ****************************************************************************
+// bitOr(n) -- n1
+//    Perform bit or between aInteger and the receiver
+//    Example : 0xF0 0x12 bitOr --> 0xF2 
+// Native method
+
+// ****************************************************************************
+// bitXor(n) -- n1
+//    Perform bit xor between aInteger and the receiver
+//    Example : 0xF0 0xF0 bitXor --> 0x00
+// Native method
+
+// ****************************************************************************
+// bitLeft(n)-- n1
+//    Shift the receiver to the left aInteger times
+//    Example : 0x02 bitLeft(3) --> 0x10 
+// Native method
+
+// ****************************************************************************
+// bitRight(n) -- n1
+//    Shift the receiver to the right aInteger times
+//    Example : 0xF0 bitRight(4) --> 0x0F 
+// Native method
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Integer output
+// ****************************************************************************
+
+// ****************************************************************************
+// #<<               ( aStream n -- aStream )
+//    Send a printable version of n to a stream
+Integer method: <<wjpb(w, j, p, b) dup addIntegerFormat(self, w, j, p, b) ;
+Integer method: <<wjp(w, j, p)     self <<wjpb(w, j, p, 10) ;
+Integer method: <<wj(w, j)         self <<wjpb(w, j, 0, 10) ;
+Integer method: <<w(w)             self <<wjpb(w, Stream.JUSTIFY_RIGHT, 0, 10) ;
+Integer method: <<                 self <<wjpb(0, Stream.JUSTIFY_RIGHT, 0, 10) ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ 2 2 == ]
+test: [ 200000000000 200000000000 == ]
+test: [ 20000000000000000000000000000 20000000000000000000000000000 == ]
+
+test: [ 2 3 == not ]
+test: [ 2 300000000000 == not ]
+test: [ 2 300000000000000000000000000000000000000 == not ]
+
+test: [ 2 3 <= ]
+test: [ 2 2 <= ]
+test: [ 2 1 <= not ]
+test: [ -2 -1 <= ]
+test: [ -2 -2 <= ]
+test: [ -2 -3 <= not ]
+
+test: [  10000000000000000000000  10000000000000000000000 <= ]
+test: [  10000000000000000000000  10000000000000000000001 <= ]
+test: [  10000000000000000000002  10000000000000000000001 <= not ]
+test: [ -10000000000000000000000 -10000000000000000000000 <= ]
+test: [ -10000000000000000000002 -10000000000000000000001 <= ]
+test: [ -10000000000000000000000 -10000000000000000000001 <= not ]
+
+test: [ 2 3 + 1 - 108 * 2 / 216 == ]
+test: [ 2000000000000000000000 dup + 1 + 4000000000000000000001 == ]
+test: [ 2000000000000000000000 sq 4000000000000000000000000000000000000000000 == ]
+
+test: [ 9 2 mod 1 == ]
+
+test: [ 123456789012345678901234567890 1234567890 /mod
+        100000000010000000001 == swap 0 == and ]
+
+test: [ 123456789012345678901234567890 100000000010000000000 /   1234567890 == ]
+test: [ 123456789012345678901234567890 100000000010000000000 mod 1234567890 == ]
+
+test: [ 10 isMultiple(5) ]
+test: [ 10000000000000000000000000000000000000000000000000000 isMultiple(5) ]
+test: [ 11 isMultiple(5) not ]
+test: [ 10000000000000000000000000000000000000000000000000011 isMultiple(5) not ]
+
+test: [ 102 isEven ]
+test: [ 10000000000000000000000000000000000000000000000000002 isEven ]
+test: [ 103 isOdd ]
+test: [ 22222222222222222222222222222222222222222222222222223 isOdd ]
+
+
+test: [ 128 96 gcd 32 == ]
+test: [ 1280000000000000000000 960000000000000000000 gcd  320000000000000000000 == ]
+
+test: [ 128 96 lcm 384 == ]
+test: [ 1280000000000000000000 960000000000000000000 lcm 3840000000000000000000 == ]
+
+test: [ 0xFF 0x12 bitAnd 0x12 == ]
+test: [ 0xF0 0x12 bitAnd 0x10 == ]
+test: [ 0xF0 0x12 bitOr  0xF2 == ]
+test: [ 0xF0 0x12 bitOr  0xF2 == ]
+test: [ 0xF0 0x0F bitXor 0xFF == ]
+test: [ 0xF0 0xF0 bitXor 0x00 == ]
+test: [ 0x02 bitLeft(3)  0x10 == ]
+test: [ 0xF0 bitRight(4) 0x0F == ]
+
+test: [ 0xF00000000000 0xFF0000000001 bitAnd 0xF00000000000 == ]
+test: [ 0xF00000000000 0x0F0000000000 bitOr  0xFF0000000000 == ]
+test: [ 0xF0F0F0F0F0F0 0x0F0F0F0F0F0F bitXor 0xFFFFFFFFFFFF == ]
+test: [ 0x000000111111 bitLeft(24)           0x111111000000 == ]
+test: [ 0xFFFFFF111111 bitRight(24)          0x000000FFFFFF == ]
+
+
+// ****************************************************************************
+// End of Integer class
+// ****************************************************************************
+

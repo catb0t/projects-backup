@@ -1,0 +1,9 @@
+ "CV qualification" is a term you'll hear when doing systems and low level programming in C and C++.
+
+To understand the meaning of this term, we should break it down. "CV" stands for "const volatile", and "qualified" refers to a variable with any sort of declaration specifiers attached. To review, the declaration specifiers found in both C and C++ are: `static`, `const`, `volatile`, `inline`, `extern`,  `auto`, and `register`.
+
+`const` tells the compiler that over its lifetime, this variable's value will not change, and thus its value may be cached after the first load, resulting in fewer operations and faster code. When used to qualify a pointer as `const int*`, the data at the pointer will not change but the pointer itself may  -- a greater degree of immutability<sup>1</sup> is achieved with `const int* const`.
+
+`volatile` tells the compiler that the runtime must assume that the value of this variable has changed since the last time it was loaded and must be refetched from memory, even if the compiler can prove that no changes were made to the variable or its value.
+
+It seems to the casual observer, then, that combining these two declaration specifiers into `const volatile` is nonsensical. However, the application comes when working with shared data -- typically, memory shared between two or more processes

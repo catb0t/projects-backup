@@ -1,0 +1,118 @@
+// *****************************************************************************
+// *****************************************************************************
+// Interval (Object->Collection->Interval)
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+// Interval implements collections of number between 2 values.
+// A step can also be defined.
+// Interval is used bye the #step: syntax
+
+// Collection Class new: Interval(begin, end, step, size)
+
+// *****************************************************************************
+// Interval definition
+// *****************************************************************************
+
+// *****************************************************************************
+// initialize(begin, end, step) 
+Interval method: initialize(begin, end, step) 
+   begin isKindOf(Number) not end isKindOf(Number) not or
+   step  isKindOf(Number) not or
+   ifTrue: [ Exception throw("Number is required to create an Interval") ]
+
+   begin := begin
+   end := end
+   step := step
+   end begin - step + step / asInteger dup isNegative ifTrue: [ drop 0 ] := size ;
+
+// *****************************************************************************
+// newFromToStep(from, to, step) -- aInterval
+//    Create a new interval
+Interval classMethod: newFromToStep -- aInterval
+   super new ;
+
+Interval classMethod: newFromTo(a, b) -- aInterval
+   1 b a super new ;
+
+// *****************************************************************************
+// seqFrom(from, to) -- aInterval
+//    Return an interval of integers between from and to.
+: seqFrom(from, to) -- aInterval
+   Interval newFromTo(from, to) ;
+
+// *****************************************************************************
+// seq(to) -- aInterval
+//    Return an interval of integers between 1 and the receiver, ie 1..to
+: seq    // ( n -- aInterval )
+   1 Interval newFromTo ;
+
+// *****************************************************************************
+// seqEach(n, r) -- ...
+//    Execute r on each integers between 1 and n
+: seqEach(n, r) 
+   | i | n loop: i [ i r perform ] ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Interval operations
+// *****************************************************************************
+
+// *****************************************************************************
+// size
+//    Return interval size
+Interval method: size -- n
+   @size ;
+
+// *****************************************************************************
+// at(aInteger)
+//		Return value of interval at aInteger index
+Interval method: at(i) -- aNumber
+	i between(1, self size) ifFalse: [ null return ]
+	@begin @step i 1 - * + ;
+
+// *****************************************************************************
+// Interval is indexable
+Interval is: Indexable
+
+// *****************************************************************************
+// forEachNext
+//    Already implemented into Indexable, but optimized here
+Interval method: forEachNext
+   dup ifNull: [ drop @begin @step - ]
+   @step + dup @end 0 @step <= ifTrue: [ <= ] else: [ >= ]
+   ifTrue: [ dup true ] else: [ drop false ] ;
+
+// *****************************************************************************
+
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ 10 seq size 10 == ]
+test: [ -2 seq isEmpty ]
+test: [ Interval new(10, 1, -2) last 2 == ]
+
+test: [ 5 seq sum 15 == ]
+test: [ 0 5 seq applyIf(#isEven, #+) 6 == ]
+test: [ 100 seq count(#isOdd) 50 == ]
+test: [ 10 conform(#[ 5 <= ]) not ]
+
+test: [ 10 seq 10 seq == ]
+test: [ 10 seq indexOf(8) 8 == ]
+test: [ 10 seq lastIndexOf(1) 1 == ]
+
+// ****************************************************************************
+
+
+// *****************************************************************************
+// End of Interval class
+// *****************************************************************************
+

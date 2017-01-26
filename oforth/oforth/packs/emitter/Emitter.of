@@ -1,0 +1,219 @@
+// *****************************************************************************
+// *****************************************************************************
+// Emitter class 
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+
+// *****************************************************************************
+// An emitter allows to : 
+//    1) Emit events
+//    2) add listeners to thoses events that will run when events occur.
+//
+// An event is a list which the first object is event name (a symbol).
+// Other fields are event parameters.
+//
+// Emitter itself listens to 4 defaults events : 
+//       $addListener, $addParallelListener, $context, $close
+//
+// Emitter can also generate $timeout event if no event is receive after
+// timeout delay.
+//
+// Pre-defined events of an emitter are :
+//
+//    $addListener : 
+//       - Event is : [ $addListener, eventName, runnable ] 
+//       - This event adds the runnable as listener for event eventName
+//
+//    $addParallelListener : 
+//       - Event is : [ $addParallelListener, eventName, runnable ] 
+//       - This event adds the runnable as listener for event eventName
+//       - When event occurs, listener is performed into a new task on
+//         the emitter scheduler
+//
+//    $close : 
+//       - Event is : [ $close ]
+//       - This event close event channel.
+//       - When all events into emitter channel are handled, event loop 
+//         is stopped.
+//
+//    $context :
+//       - Event is : [ $context, keyContext, value ]
+//       - This event adds a new value to keyContext of emitter context
+//       - Context is sent to all listeners when they a called
+//
+//    $timeout :
+//       - Event is : [ $timeout ]
+//       - This event is sent only if emitter is created with an event timeout.
+//       - In this cas, if no event occurs during a timeout delay, this
+//         event is emitted, then loop restart.
+//
+Object Class new: Emitter(
+   events,              // Channel where events are sent and received by event loop
+   eventTimeout,        // If not null, event loop can generate $timeout event
+)
+
+//******************************************************************************
+// Emitter events loop
+//******************************************************************************
+
+//******************************************************************************
+// performListener(aListener, aEvent, aContext)
+//    Perform aListener because aEvent has been raised
+Emitter method: performListener(aListener, event, context)
+| e |
+   // If parallel listener, perform it on a separate task
+   aListener first $addParallelListener == 
+      ifTrue: [ #[ context event self aListener third perform ] & return ]
+
+   // Else perform it directly on emitter task
+   try: e [ context event self aListener third perform ]
+   when:  [ 
+      System.Out "Emitter : exception catched into listener " << 
+          aListener third << " for event " << event << cr
+      System.Out "Exception is : " << e << cr
+      ]
+   clr ;
+
+//******************************************************************************
+// handleEmitterEvents
+//    Loop on events until $close event is received
+//
+//    For each event, perform each listeners : 
+//
+Emitter method: handleEmitterEvents
+| context newValue allListeners listener event eventName eventTimeout e |
+
+   [ ] -> allListeners
+   [ ] -> context
+   [ $timeout ] ->eventTimeout
+
+   while(true) [
+      // Wait for next event on channel or timeout
+      null ->event null ->newValue 
+
+      @events receiveTimeout(@eventTimeout) dup ->event ifNull: [
+         System lastError ETIMEOUT &= ifFalse: [ break ]
+         eventTimeout ->event
+         ]
+
+      event first ->eventName
+
+      // Perform each runnables that are listening on this event.
+      allListeners valueAt(eventName) 
+         forEach: listener [ self performListener(listener, event, context) ]
+      null ->listener
+      
+      // If $addListener event, also add the runnable to listeners list.
+      eventName $addListener == eventName $addParallelListener == or ifTrue: [ 
+         try: e [
+            allListeners valueAt(event second) [ event ] + ->newValue
+            allListeners replaceValueAt(event second, newValue) ->allListeners
+            ]
+         when: [ System.Out "Emitter : can't add listener : " << event second << cr ]
+         ]
+
+      // If $context event, add or replace a new value to keyContext of context
+      eventName $context == ifTrue: [ 
+         try: e [
+            context valueAt(event second) dup 
+               ifNull: [ drop [ [ event third first, event third ] ] ->newValue ]
+               else: [ replaceValueAt(event third first, event third) ->newValue ]
+
+            context replaceValueAt(event second, newValue) ->context
+            ]
+         when: [ System.Out "Emitter : can't add to context : " << event second << cr ]
+         ]
+
+      // If $close event, close the emitter channel. 
+      // No more event can be emitted but all events already into channel are handled
+      eventName $close == ifTrue: [ @events close ]
+      null ->e
+      ] ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Emitter operations
+//******************************************************************************
+
+//******************************************************************************
+// emit(aEvent)
+//    Emit an event.
+//    Send event to events channel
+//    Event must be non mutable
+Emitter method: emit(aEvent) 
+   aEvent isKindOf(String) ifTrue: [ [ aEvent asSymbol ] ->aEvent ]
+
+   @events send(aEvent) 
+      ifFalse: [ ExRuntime throw("Emitter is closed, can't emit event", aEvent) ] ;
+
+//******************************************************************************
+// onEvent(aEvent, r)
+//    Add a new listener for aEvent
+//    When aEvent will be emitted, r will be performed.
+//    aEvent is a string or a symbol and will be converter to symbol.
+Emitter method: onEvent(aEvent, r) 
+   self emit([$addListener, aEvent asSymbol, r ]) ;
+
+//******************************************************************************
+// onEventParallel(aEvent, r)
+//    Add a new listener for aEvent
+//    aEvent is a string or a symbol and will be converter to symbol.
+//
+//    When event occurs, r will run into a separate task
+Emitter method: onEventParallel(aEvent, r) 
+   self emit([$addParallelListener, aEvent asSymbol, r ]) ;
+
+//******************************************************************************
+// isOpen
+//    Return true if emitter channel is open and can receive events
+Emitter method: isOpen -- b
+   @events isOpen ;
+
+//******************************************************************************
+// close
+//    Close emitter :
+//       - Stop event loop
+//       - Emit is no more possible on this emitter
+Emitter virtual: close 
+   $close self emit ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Emitter creation
+//******************************************************************************
+
+//******************************************************************************
+// initialize(n)
+//    Initialize the emitter.
+//
+//    aScheduler is used to : 
+//       - Launch loop event task for this emitter during initialization.
+//       - Launch tasks if listeners are added using #onEventParallel
+//
+//    n (microseconds) will be used when receiving events into event loop.
+//       - If timeout is null, loop will block until a new event occurs or emitter
+//         is closed.
+//       - If timeout is not null, and if no new event is received during
+//         aTimeout microseconds, $timeout event is raised and listeners on
+//         this event are called.
+//         After that, event loop restart receiving events.
+//
+Emitter virtual: initialize(n)
+   Channel newSize(1000) := events
+   n := eventTimeout
+   #[ self handleEmitterEvents ] & ;
+
+//******************************************************************************
+
+
+// *****************************************************************************
+// End of Emitter class
+// *****************************************************************************
+

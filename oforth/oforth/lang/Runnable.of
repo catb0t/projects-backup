@@ -1,0 +1,47 @@
+// ****************************************************************************
+// ****************************************************************************
+// Runnable Property 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Runnable property implement objects that can be performed
+// Classes must implement #perform in order to be Runnable
+
+// ****************************************************************************
+// Runnable definition
+// ****************************************************************************
+Property new: Runnable
+Runnable requires: perform
+
+// ****************************************************************************
+// isRunnable           ( r -- b )
+//    Return true if the receiver is runnable
+Object   virtual: isRunnable -- b
+   false ;
+
+Runnable method:  isRunnable -- b
+   true ;
+
+// ****************************************************************************
+// curry(x)             ( aObject aRunnable -- aBlock )
+//    Return a block that, when performed, execute aRunnable on aObject
+Runnable method: curry(x) -- aBlock
+   #[ x self perform ] ;
+
+// ****************************************************************************
+// times(aInteger) -- ...
+//    Perform aRunnable for aInteger times
+Runnable method: times     // n r -- ...
+   | i | loop: i [ self perform ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// End of Runnable property
+// ****************************************************************************
+

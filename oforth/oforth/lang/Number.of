@@ -1,0 +1,112 @@
+// ****************************************************************************
+// ****************************************************************************
+// Number class
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Integers, Floats, Fractions ... are numbers
+
+// ****************************************************************************
+// Number definition
+// ****************************************************************************
+// Object Class new: Number
+
+// ****************************************************************************
+// isNumber          ( x -- b )
+//    Return true the receiver is a number
+Object virtual: isNumber -- b
+   false ;
+
+Number method: isNumber -- b
+   true ;
+
+// ****************************************************************************
+// Following methods must be implemented by concret number classes
+// and #== has to be redefined if Object>>#== definition does not apply
+Number virtual: <= #<= self subclassResponsability ;
+Number virtual: +  #+  self subclassResponsability ;
+Number virtual: -  #-  self subclassResponsability ;
+Number virtual: *  #*  self subclassResponsability ;
+Number virtual: /  #/  self subclassResponsability(#/) ;
+Number virtual: asInteger #asInteger self subclassResponsability ;
+Number virtual: asFloat   #asFloat   self subclassResponsability ;
+
+// ****************************************************************************
+// numbers are comparables
+Number is: Comparable
+
+// ****************************************************************************
+// neg               ( aNumber -- aNumber )
+//    Return negative number
+Number virtual: neg -- aNumber
+   0 self - ;
+
+// ****************************************************************************
+// sq                ( aNumber -- aNumber )
+//    Return aNumber^2
+Number method: sq -- aNumber
+   self self * ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Number comparisons
+// ****************************************************************************
+
+// ****************************************************************************
+// ==0               ( aNumber -- [ true | false ] )
+//    Check if the number is equal to 0
+Number virtual: ==0 -- b
+   self 0 == ;
+
+// ****************************************************************************
+// isPositive        ( aNumber -- [ true | false ] )
+//    Return true aNumber is positive
+Number virtual: isPositive -- b
+   0 self <= ;
+
+// ****************************************************************************
+// isNegative        ( aNumber -- [ true | false ] )
+//    Return true aNumber is negative
+Number virtual: isNegative -- b 
+   self 0 <= ;
+
+// ****************************************************************************
+// sgn               ( aNumber -- n )
+//    Return sign of aInteger :  1 if > 0, -1 if < 0, 0 if ==0 )
+Number virtual: sgn -- n
+   self isPositive 
+      ifTrue: [ self ==0 ifTrue: [ 0 ] else: [ 1 ]  ]
+      else:   [ -1 ] ;
+
+// ****************************************************************************
+// abs               ( aNumber -- aNumber )
+//    Return absolute value of aNumber
+Number virtual: abs -- aNumber
+   self dup isPositive ifFalse: [ neg ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ 12 isPositive ]
+test: [ 12 isNegative not ]
+test: [ -12 isPositive not ]
+test: [ -12 isNegative ]
+test: [ 12 sgn 1 == ]
+test: [ -12 sgn -1 == ]
+test: [ 0 sgn 0 == ]
+test: [ -12.3 abs 12.3 == ]
+
+
+// ****************************************************************************
+// End of Number class
+// ****************************************************************************
+

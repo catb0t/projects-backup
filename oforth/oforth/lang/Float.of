@@ -1,0 +1,375 @@
+// ****************************************************************************
+// ****************************************************************************
+// Float class (Object->Number->Float)
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Float is a concrete class that represent floating point objects.
+
+
+// ****************************************************************************
+// Float definition
+// ****************************************************************************
+// Number Class new: Float
+
+// ****************************************************************************
+// Float constants
+ 1.0 exp         const: E
+ 2.0 ln          const: Ln2
+10.0 ln          const: Ln10
+-1.0 acos        const: Pi
+10.0 1000.0 powf const: PInf
+PInf neg         const: NInf
+
+
+// ****************************************************************************
+// Float operations
+// ****************************************************************************
+
+// ****************************************************************************
+// new               ( Float -- 0.0 )
+//    Create a new float
+Float classMethod: new -- f
+   0.0 ;
+
+// ****************************************************************************
+// ==                ( f1 f2 -- b )
+//    Return true if the two floats have the same value
+// Native method
+
+// ****************************************************************************
+// <=                ( f1 f2 -- b )
+//    Return float comparison
+// Native method
+
+// ****************************************************************************
+// +                 ( f1 f2 -- f3 )
+//    aFloat = aNumber + aFloat
+// Native method
+
+// ****************************************************************************
+// -                 ( f1 f2 -- f3 )
+//    aFloat = aNumber - aFloat
+// Native method
+
+// ****************************************************************************
+// *                 ( f1 f2 -- f3 )
+//    aFloat = aNumber * aFloat
+// Native method
+
+// ****************************************************************************
+// /                 ( f1 f2 -- f3 )
+//    aFloat = aNumber / aFloat
+//    Send exception if f2 is 0.0
+// Native method
+
+// ****************************************************************************
+// asInteger         ( f -- n )
+//    Return integer part of aFloat
+// Native method
+
+// ****************************************************************************
+// isFloat           ( f -- b )
+//    Return true if the receiver is a float
+Object virtual: isFloat -- b
+   false ;
+
+Float method: isFloat -- b
+   true ;
+
+// ****************************************************************************
+// asFloat           ( f -- f )
+//    Return float representation of aObject
+// Integer method: asFloat
+Float method: asFloat -- f
+   self ;
+
+// ****************************************************************************
+// neg               ( f1 -- f2 )
+//    Return negative number
+Float method: neg -- f
+   0.0 self - ;
+
+// ****************************************************************************
+// ==0               ( f -- b )
+//    Check if the number is equal to 0
+Float method: ==0 -- b
+   self 0.0 == ;
+
+// ****************************************************************************
+// isPositive        ( f -- b )
+//    Return true aNumber is positive
+Float method: isPositive -- b
+   0.0 self <= ;
+
+// ****************************************************************************
+// isNegative        ( f -- b )
+//    Return true aNumber is negative
+Float method: isNegative -- b
+   self 0.0 <= ;
+ 
+// ****************************************************************************
+// trunc
+// 	Return integer part of the receiver 
+Number virtual: trunc -- n
+   self asInteger ;
+
+// ****************************************************************************
+// ceil              ( f -- n )
+//		Return next highest integer
+Number  virtual: ceil -- n
+   self asFloat ceil ;
+
+Integer method: ceil -- n
+   self ;
+
+Float method: ceil -- n
+	self dup isPositive ifTrue: [ 0.999999999999999 + ] asInteger ;
+
+// ****************************************************************************
+// floor             ( f -- n )
+//		Return next lowest integer
+Number  virtual: floor -- n
+   self asFloat floor ;
+
+Integer method: floor -- n
+   self ;
+
+Float   method:  floor -- n
+	self dup isNegative ifTrue: [ 0.999999999999999 - ] asInteger ;
+
+// ****************************************************************************
+// round             ( f -- n )
+//		Return the nearest integer of the receiver
+Number  virtual: round -- n
+   self asFloat round ;
+
+Integer method: round -- n
+   self ;
+
+Float method: round -- n
+	self 0.5 self isPositive ifTrue: [ + ] else: [ - ] asInteger ;
+
+// ****************************************************************************
+// frac              ( f1 -- f2 )
+//    Return fractional part of the receiver 
+Float method: frac -- f
+   self abs dup asInteger - ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Mathematic operations 
+// ****************************************************************************
+
+// ****************************************************************************
+// sqrt              ( aNumber -- f )
+//    Return square root of the receiver
+// Native method for Float
+Number virtual: sqrt -- f
+   self asFloat sqrt ;
+
+// ****************************************************************************
+// inv               ( aNumber -- f )
+//    Return 1.0 / f
+Number virtual: inv -- f
+   1.0 self / ;
+
+// ****************************************************************************
+// powf              ( f1 f2 -- f1^f2 )
+//    Return f1^f2
+// Native method
+
+// ****************************************************************************
+// root              ( f1 f2 -- f1^(1/f2) )
+Number virtual: root    // f1 f2 -- f3 )
+   self inv powf ;
+
+// ****************************************************************************
+// exp/ln/log        ( aNumber -- f )
+//    Return ln, exp, log
+//    Return math error exception if ln(aFloat) is not defined
+Number virtual: ln -- f
+   self asFloat ln ;
+
+Number virtual: log -- f
+   self ln Ln10 / ;
+
+Number virtual: exp -- f
+   self asFloat exp ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Trigonometrics & hyperbolics
+// ****************************************************************************
+
+// ****************************************************************************
+// Conversions       ( aNumber -- f )
+Number method: asRadian -- f
+   self Pi * 180.0 / ;
+
+Number method: asDegree -- f
+   self 180.0 * Pi / ;
+
+// ****************************************************************************
+// Trigonometrics functions         ( aNumber -- aFloat )
+//    These methods use angle expressed in radians as receiver
+Number method: cos -- f
+   self asFloat cos ;
+
+Number method: sin -- f
+   self asFloat sin ;
+
+Number method: tan -- f 
+   self asFloat tan ;
+
+Number method: cotg -- f 
+   1.0 self tan / ;
+
+Number method: acos -- f 
+   self asFloat acos ;
+
+Number method: asin -- f
+   self asFloat asin ;
+
+Number method: atan -- f 
+   self asFloat atan ;
+
+// ****************************************************************************
+// Hyperbolics functions         ( aNumber -- aFloat )
+Number method: sinh -- f
+   self exp self neg exp - 2.0 / ;
+
+Number method: cosh -- f 
+   self exp self neg exp + 2.0 / ;
+
+Number method: tanh -- f
+   self 2.0 * exp dup 1.0 - swap 1.0 + / ;
+
+Number method: coth -- f 
+   1.0 self tanh / ;
+
+Number method: asinh -- f
+   self sq 1.0 + sqrt self + ln ;
+
+Number method: acosh -- f
+   self sq 1.0 - sqrt self + ln ;
+
+Number method: atanh -- f 
+   1.0 self + 1.0 self - / ln 2.0 / ;
+
+Number method: acoth -- f 
+   1.0 self atanh / ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Random
+// ****************************************************************************
+
+// ****************************************************************************
+// rand        ( Float -- f )
+//    Return random float between 0 and 1, excluding 0 and 1
+// Float classMethod: rand
+
+// ****************************************************************************
+// rand        ( n1 -- n2 )
+//    Return random integer between 1 and the receiver
+//    Example : 1000 seq map(#[ drop 5 rand ]) 
+Integer method: rand -- n
+   Float rand self * asInteger 1 + ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Display 
+// ****************************************************************************
+
+// ****************************************************************************
+// <<             ( aStream f -- aStream )
+//    Print formatted output of the receiver
+Float method: <<wjp(w, j, p) dup addFloatFormat(self, w, j, p) ;
+Float method: <<wj(w, j)     self <<wjp(w, j, 15) ;
+Float method: <<w(w)         self <<wjp(w, Stream.JUSTIFY_RIGHT, 15) ;
+Float method: <<             self <<wjp(0, Stream.JUSTIFY_RIGHT, 15) ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [  1 asFloat 1.0 == ]
+test: [ -1 asFloat -1.0 == ]
+test: [ 1.0 2 <= ]
+test: [ 1 2.0 + 2.1 - 0.2 / 2 * 9 == ]
+
+test: [  2.4 round  2 == ]
+test: [  3.9 round  4 == ]
+test: [  5.5 round  6 == ]
+test: [ -2.4 round -2 == ]
+test: [ -3.9 round -4 == ]
+test: [ -5.5 round -6 == ]
+
+test: [  2.4 floor  2 == ]
+test: [  3.9 floor  3 == ]
+test: [  5.5 floor  5 == ]
+test: [ -2.4 floor -3 == ]
+test: [ -3.9 floor -4 == ]
+test: [ -5.5 floor -6 == ]
+
+test: [  2.4 ceil   3 == ]
+test: [  3.9 ceil   4 == ]
+test: [  5.5 ceil   6 == ]
+test: [ -2.4 ceil  -2 == ]
+test: [ -3.9 ceil  -3 == ]
+test: [ -5.5 ceil  -5 == ]
+
+test: [  2.4 trunc  2 == ]
+test: [  3.9 trunc  3 == ]
+test: [  5.5 trunc  5 == ]
+test: [ -2.4 trunc -2 == ]
+test: [ -3.9 trunc -3 == ]
+test: [ -5.5 trunc -5 == ]
+
+test: [  2.4 frac 0.4 == ]
+test: [ -2.4 frac 0.4 == ]
+test: [ -2.8 frac 0.8 == ]
+
+test: [ 5.29 sqrt 2.3 == ]
+test: [ 2.0 3 pow 8.0 == ]
+test: [ 2.0 3.0 powf 8.0 == ]
+test: [ 1.0 ln 0.0 == ]
+test: [ 0.0 exp 1.0 == ]
+
+test: [ Pi asDegree 180 == ]
+test: [ 360 asRadian Pi 2 * == ]
+
+test: [ Pi cos -1 == ]
+test: [ Pi sin 0 == ]
+test: [ Pi 4 / tan 1 == ]
+
+test: [ -1 acos Pi == ]
+test: [ Pi 2.0 / asin 1 == ]
+
+test: [ 1.0 cosh E sq 1 + 2 E * / == ] // cosh(1) = (e^2 + 1)/2e
+test: [ 1.0 sinh E sq 1 - 2 E * / == ] // sinh(1) = (e^2 - 1)/2e
+test: [ 1.0 tanh 1.0 sinh 1.0 cosh / == ]
+
+test: [ E sq 1 + 2 E * / acosh 1.0 == ] 
+test: [ E sq 1 - 2 E * / asinh 1.0 == ] 
+
+
+// ****************************************************************************
+// End of Float class
+// ****************************************************************************
+

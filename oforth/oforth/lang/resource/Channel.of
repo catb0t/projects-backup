@@ -1,0 +1,154 @@
+//******************************************************************************
+//******************************************************************************
+// Channel (Object->Resource->Channel)
+//******************************************************************************
+//******************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Channels allow communication between concurrent tasks.
+//    An immutable objet can be sent into a channel using #send
+//    If channel is empty, the task will wait until an object arrives.
+
+//    A task can retrieve an objet using #receive
+//    If the channel is fulln the task will wait until an object is removed.
+
+
+//******************************************************************************
+// Channel creation
+//******************************************************************************
+// Resource Class new: Channel
+
+//******************************************************************************
+// initialize(n)
+//    Creates a new channel with n as maximum size
+// Native method
+
+//******************************************************************************
+// newSize(n)
+//    Creates a new channel with n as maximum size
+Channel classMethod: newSize -- aChannel
+   super new;
+
+//******************************************************************************
+// new
+//    Creates a new channel with 200 as maximum size
+//    If channel is empty, all tasks performing a receive will wait until
+//    the channel is no more empty
+//    If channel is full, all tasks performing a send will wait until the
+//    channel is no more full
+Channel classMethod: new -- aChannel
+   200 self newSize ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Channel operations
+//******************************************************************************
+
+//******************************************************************************
+// select(mode)
+//    Check if channel is ready for aMode
+//    mode is Resource.RECEIVE or Resource.SEND
+//    
+//    Return true if the channel est ready, false otherwise.
+//
+//    Channels can be shared among tasks, so race conditions can occur. For 
+//    instance : 
+//    - The channel has 1 object.
+//    - Task 1 select for channel with Resource.RECEIVE --> true
+//    - Task 2 receive 1 object on the channel.
+//    - Task 1 receive 1 object and block because channel is now empty.
+// Native method
+
+//******************************************************************************
+// receiveTimeout(n)
+//    Receive the next object sent into the channel.
+//    If the channel is empty, the task will wait until the channel is no more
+//    empty or timeout occured.
+//    
+//    n is the number of microseconds before timeout occurs.
+//    If timeout is null, the task will block until the channel is no more empty
+//
+//    Even if the channel is closed, #receive will retrieve objects into the
+//    the channel, until the channel is empty.
+//    When the closed channel is empty, #receive returns null.
+//
+//    Return value : 
+//       - Next object into the channel (which must be not null)
+//       - null if timeout or channel is closed and empty (check System lastError)
+//
+//    Errors (set if #receiveTimeout returns null) :
+//       - ETIMEOUT    : A timeout occured.
+//       - ERESCLOSED  : The receiver is closed and empty
+//
+Channel method: receiveTimeout -- x
+   self channelReceiveTimeout ;
+
+//******************************************************************************
+// receive
+//    Receive the next objet sent into the channel.
+//    Block until the channel is not empty.
+//
+//    Even if the channel is closed, #receive will retrieve objects into the
+//    the channel, until the channel is empty.
+//    When the closed channel is empty, #receive returns null.
+//
+//    Return value : 
+//       - Next object into the channel (which must be not null)
+//       - null if channel is closed and empty
+//
+//    Errors (set if #receiveTimeout returns null) :
+//       - ERESCLOSED  : The receiver is closed and empty
+//
+Channel method: receive -- x
+   null self receiveTimeout ;
+
+//******************************************************************************
+// sendTimeout(x, n)
+//    Send an immutable non null object into the channel.
+//
+//    If the channel is full, the task will block until an object is received
+//    or the timeout occured or the channel is closed.
+//
+//    n is the number of microseconds before timeout occurs.
+//    If timeout is null, the task will block until the channel is no more full
+//
+//    Return : 
+//       - true if aObject has been sent
+//       - false if timeout occured or if the channel is closed
+//    
+//    Errors (set if #sendTimeout returns false) :
+//       - ETIMEOUT    : A timeout occured.
+//       - ERESCLOSED  : The receiver is closed.
+//
+Channel method: sendTimeout -- b
+   self channelSendTimeout ;
+
+//******************************************************************************
+// send(x)
+//    Send an immutable non null object into the channel.
+//
+//    If the channel is full, the task will block until an object is received
+//    from the channel.
+//
+//    Return : 
+//       - true if aObject has been sent
+//       - false if the channel is closed
+//    
+//    Errors (set if #send returns false) :
+//       - ERESCLOSED  : The receiver is closed.
+//
+Channel method: send(x) -- b 
+   null x self sendTimeout ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// End of Channel class
+//******************************************************************************
+

@@ -1,0 +1,68 @@
+// *****************************************************************************
+// *****************************************************************************
+// Node package
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+// Node package allows to an Oforth instance to act as a node.
+
+// A oforth node is a subclass of TCPServer. 
+// An oforth node is started when option --Nconffile is set.
+// If so, the node server is storer into the System.NodeServer constant.
+
+// When oforth runs as a node server, it is possible to :
+//
+// 1) Use remote channel
+//    A node can export a channel, that will be visibe from other nodes.
+//    These nodes can send objects and receive objects from an exported channel.
+//    
+//    To export a channel on a node : 
+//       aChannel export(aSymbol)
+//
+//    To use a remote channel on an distant oforth node, a NodeChannel object
+//    is created. This object will act as a local channel, ie
+//    is is possible to receive and send objects on this channel as if it was
+//    a local channel.
+//       NodeChannel new(nodeAdress, aSymbolName)
+//
+//    In order to use remote channel, each oforth instance have to be running as
+//    an oforth node.
+//
+//    See : examples.parallel.remoteChannel.of for an example
+
+
+// ****************************************************************************
+// Node package signature
+// ****************************************************************************
+[ 
+   [ $name, "node" ], 
+   [ $version, "V0.9.0" ],
+   [ $state, $NotStable ],
+   [ $directory, "node" ],
+   [ $dependencies, [ "tcp" ] ],
+   [ $author, "Franck Bensusan" ],
+   [ $contributors, [ ] ],
+   [ $url, "www.oforth.com" ],
+   [ $license, "BSD" ]
+]
+
+// *****************************************************************************
+// Node files
+// *****************************************************************************
+[
+   "NodeRequest.of",
+   "NodeServer.of",
+   "NodeChannel.of" 
+]
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// End of TCP package
+// *****************************************************************************
+

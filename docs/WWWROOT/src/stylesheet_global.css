@@ -1,0 +1,148 @@
+html,
+body {
+    background: black;
+    -webkit-animation: flash 1s 1;
+    -moz-animation: flash 1s 1;
+    /* Chrome, Safari, Opera */
+    animation: flash 1s 1;
+    height: 93%;
+    width: auto;
+    cursor: crosshair;
+}
+p {
+    font-family: sansation-li;
+}
+
+@font-face {
+    font-family: sansation-li;
+    src: url(../fonts/sansation_light_italic.woff);
+    /*font-family: sansation-li;
+	src: url(sansation_light_italic.woff);
+	font-family: sansation-li;
+	src: url(sansation_light_italic.woff);*/
+}
+
+/* Chrome, Safari, Opera */
+
+@-webkit-keyframes flash {
+    from {
+        background-color: white;
+    }
+    to {
+        background-color: black;
+    }
+}
+
+/* Standard syntax */
+
+@keyframes flash {
+    from {
+        background-color: white;
+    }
+    to {
+        background-color: black;
+    }
+}
+
+#mainContent {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: xx-large;
+    color: #FFFFFF;
+    font-weight: bold;
+    text-align: center;
+    height: 100%;
+    width: 100%;
+}
+#vl {
+    width: 5px;
+    height: 27%;
+    position: absolute;
+    color: white;
+    border: none;
+    background-color: #FFFFFF;
+    margin: auto;
+}
+.hidden {
+    display: none;
+}
+iframe[seamless] {
+    background-color: transparent;
+    border: 0px none transparent;
+    padding: 0px;
+    overflow: hidden;
+    display: block;
+    margin: auto;
+    width: 85%;
+    height: 70%;
+}
+.text {
+    font-weight: normal;
+    color: #FFFFFF;
+    letter-spacing: 1pt;
+    word-spacing: 1pt;
+    font-size: 1.5em;
+    text-align: center;
+    font-family: sansation-li;
+    line-height: 1;
+    margin: 0px;
+    padding: 0px;
+}
+.buttonStyle {
+    background-color: transparent;
+    -webkit-border-top-left-radius: 0px;
+    -moz-border-radius-topleft: 0px;
+    border-top-left-radius: 0px;
+    -webkit-border-top-right-radius: 20px;
+    -moz-border-radius-topright: 20px;
+    border-top-right-radius: 20px;
+    -webkit-border-bottom-right-radius: 0px;
+    -moz-border-radius-bottomright: 0px;
+    border-bottom-right-radius: 0px;
+    -webkit-border-bottom-left-radius: 20px;
+    -moz-border-radius-bottomleft: 20px;
+    border-bottom-left-radius: 20px;
+    border: none;
+    display: inline-block;
+    color: #ffffff;
+    font-family: Arial;
+    font-size: 25px;
+    font-weight: bold;
+    font-style: italic;
+    height: 50px;
+    line-height: 50px;
+    width: 100px;
+    text-decoration: none;
+    text-align: center;
+    text-shadow: 1px 1px 14px #000000;
+    padding: 1%;
+}
+.buttonStyle:hover {
+    position: relative;
+    color: lightcoral;
+    bottom: 2px;
+}
+.buttonStyle:active {
+    position: relative;
+    color: lawngreen;
+    top: 1px;
+    right: 3px;
+}
+.buttonStyle:focus {
+    outline: 0;
+}
+.buttonStyle:select {
+    background: transparent;
+}
+::selection {
+    background: transparent;
+}
+::-moz-selection {
+    background: transparent;
+}
+
+/* This button was generated using CSSButtonGenerator.com
+prestidigitation "presti-digit-ation"- performing magic tricks as an experiment
+floccinaucinihilipilification "flocky-nocky-nihili-pilli-fication"- the action or habit of calling something worthless; to devalue something or declare it valueless
+erotographomania - technical term for nudes
+steiautopeigic ?
+pneumonoultramicroscopicsiliconvolcanoconiosis "new-mono-ultra-micro-scopic-silicone-volcano-coney-oh-sis"

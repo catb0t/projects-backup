@@ -1,0 +1,3 @@
+Hathaway’s 1969 True Grit more faithfully depicts Mattie’s relationship with Rooster in the “Mattie Crosses the River” scene in the book.
+
+In the book, Mattie catches up with Rooster & LaBeouf at the ferry station, and Rooster looks on smugly as LaBeouf sees to having Mattie thrown off the ferry by dishonestly insinuating that she's a runaway & that there is a bounty on her return. The Hathaway production is nearly identical save for minor details, but the Coen brothers' rendition almost entirely drops this sequence. The small nod to the book comes in the form of the ferry worker similarly 

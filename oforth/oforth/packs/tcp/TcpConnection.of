@@ -1,0 +1,64 @@
+// *****************************************************************************
+// *****************************************************************************
+// TcpConnection class
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+Method new: closedConnection
+Method new: timeoutConnection
+Method new: bufferFull
+
+// *****************************************************************************
+// This class implements a tcp connection
+//
+// This object holds : 
+//    - the socket
+//    - the keep alive delay to apply to this connection (0 if no keepalive)
+//    - The buffer used by each request received or send using this connection
+
+// *****************************************************************************
+// TcpConnection definition
+// *****************************************************************************
+Object Class new: TcpConnection(sock, keepAliveDelay)
+
+
+// *****************************************************************************
+// socket
+//    Return socketClient associated to this connection
+TcpConnection method: socket -- aTCPSocketClient
+   @sock ;
+
+// *****************************************************************************
+// keepAliveDelay
+//    Return keepAlive delay (microseconds)
+TcpConnection method: keepAliveDelay -- aInteger
+   @keepAliveDelay ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// TcpConnection creation
+// *****************************************************************************
+
+// *****************************************************************************
+// initialize(aSocket, aKeepAliveDelay)
+//    Initialize a new tcp connection with : 
+//       - aSocket : socket used to read
+//       - aKeepAliveDelay : keepalive timeout (microseconds) to use.
+//    
+TcpConnection method: initialize(aSocket, aKeepAliveDelay) 
+   aSocket := sock
+   aKeepAliveDelay := keepAliveDelay ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// End of TcpConnection class
+// *****************************************************************************
+

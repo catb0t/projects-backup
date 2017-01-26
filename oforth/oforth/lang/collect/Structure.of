@@ -1,0 +1,97 @@
+// ****************************************************************************
+// ****************************************************************************
+// Structure
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Structures are objets representing a C Structure
+// Structures are mutable
+
+// ****************************************************************************
+// Structure definition
+// Buffer Class new: Structure
+
+// ****************************************************************************
+// initialize(aStruct)
+//    Create a new structure corresponding to aStruct
+Structure method: initialize  // aStruct Structure -- 
+   := type ;
+
+// ****************************************************************************
+// type
+//    Return ctype corresponding to the structure
+Structure method: type -- aStruct
+   @type ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Structure operations
+// ****************************************************************************
+
+// *****************************************************************************
+// basicPut(n, c)
+//    Put aChar at aInteger position.
+//    If aChar is greater than 255, put (aChar rem 256) at aInteger position
+//    Throw exception if aInteger is greater than structure size
+// Native Implement
+
+// ****************************************************************************
+// fieldAt(s)
+//    Return structure value at aSymbol field according to field type
+
+// ****************************************************************************
+// fieldPut(s, x)
+//    Put x at s field according to field type.
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Struct class
+// ****************************************************************************
+// Word Class new: Struct
+
+// ****************************************************************************
+// new:
+//    Create a new ctype with next word as name
+//    Example : Struct new: STRUCT(int8 a, ptr b, int32 c)
+// Native class method
+
+// ****************************************************************************
+// sizeof
+//    Return size of structures of type Struct
+// Native method
+
+// ****************************************************************************
+// new
+//    Create a new structure of of the receiver
+Struct method: new -- aStructure
+   Structure newSize(self sizeof, self) ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ Struct new: A(int32 a, char10 b, int16 c, int8 d, ptr e) A sizeof 24 == ]
+
+test: [
+   Struct new: B(int32 a, double b, int16 c, int8 d, ptr e) 
+   B new 
+   dup fieldPut($b, 1.2) fieldAt($b) 1.2 == 
+   ]
+   
+// ****************************************************************************
+   
+
+// ****************************************************************************
+// End of Structure class
+// ****************************************************************************
+

@@ -1,0 +1,12 @@
+endings 
+
+stay home: “Instead of following your friends (as if you ever had them), you elect to stay home, tapping on a keyboard, like the boring loser you are. No adventure for you, I suppose. No death, either, though, so maybe that’s a plus.” —PRESS ANY KEY—
+
+lost in woods: “On your noble quest to locate your friend, you venture a bit too deeply into the woods and lose your way back to the road, to safety, to sanity. Your flashlight has started to sputter, indicating a lack of charge. It’s too dark and your sense of direction is quite demolished. The dim yellow beam highlights trees and bushes, as you swing it wildly. You can’t stay here. Deciding a particular grove of trees seems familiar, you begin your trek in that direction.
+
+New England forests are deep, and they’re dark. Keep walking. Who knows, maybe you’ll find a road. Or a cold, lifeless corpse. Perhaps you bend down, clenching that harsh beam, and stumble backwards as you realise the face is that of your friend’s. 
+You regain your balance, and turn from the corpse, only to stare straight at a pair of glowing red eyes. Oddly, just as they focus, everything goes black.
+You decide you prefer it this way.
+— PRESS ANY KEY —”
+
+monster confrontation: “

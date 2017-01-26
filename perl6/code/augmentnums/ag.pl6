@@ -1,0 +1,1 @@
+use MONKEY-TYPING;augment class Int{method is-even()returns Bool {self%%2;}};for (1..500) ->$i {say $i.is-even;}

@@ -1,0 +1,9 @@
+
+// Some words to experiment incremental GC : 
+
+// Lot's of small objects : 
+
+: f(n)
+   | i | n loop: i [ Object new drop ] ;
+
+

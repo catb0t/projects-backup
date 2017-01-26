@@ -1,0 +1,11 @@
+import sollux;                  //calls variable "sollux"
+import eridan;                  //calls variable "eridan"
+
+~ATH(sollux){EXECUTE(--)}       //sets the value of "sollux" to -2
+~ATH(eridan){EXECUTE(+++++)}    //sets the value of "eridan" to 5
+
+[sollux].DIE();                 //kills "sollux", prints "DIE sollux" twice
+
+~ATH(eridan){EXECUTE(+)}        //sets the value of "eridan" to 6
+
+[eridan].DIE();                 //kills "eridan", prints "DIE eridan" 6 times

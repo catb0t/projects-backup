@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="favicon" src="favicon.png">
+    <title>Intro | Night Ride</title>
+    <link rel="stylesheet" type="text/css" href='src/stylesheet_global.css'>
+    <script type="text/javascript" src="src/global.js"></script>
+    <script type="text/javascript" src="src/jquery.min.js"></script>
+    <script type="text/javascript" src="src/jquery.min.js"></script>
+    <script type="text/javascript" src="src/iframe.js"></script>
+    <script type="text/javascript" src="/path/to/squeezeFrame.js"></script>
+</head>
+
+<body>
+    <hr id="vl" style="left: 1%;" />
+    <hr id="vl" style="left: 4%;" />
+    <hr id="vl" style="left: 7%;" />
+    <hr id="vl" style="right: 1%;" />
+    <hr id="vl" style="right: 4%;" />
+    <hr id="vl" style="right: 7%;" />
+
+    <div id="mainContent">
+
+        <p id="topText" onclick="toggleshow(this)">
+            <b>
+                <i>
+                    night ride
+                    <br>
+                    ///
+                    <br>
+                    an interactive adventure
+                    <small>
+                        <font size="2">
+                            click2hide
+                        </font>
+                    </small>
+                </i>
+            </b>
+        </p>
+        <iframe id="iframe_1" src="cntd/1.html" name="iframe_a" sandbox="allow-same-origin allow-scripts allow-forms" seamless scrolling="yes">
+        </iframe>
+        <a id="lbA" href="z/1.html" target="iframe_a" class="buttonStyle">A</a>
+        <a id="lbB" href="z/FAIL.html" target="iframe_a" class="buttonStyle">B</a>
+    </div>
+</body>
+
+</html>
+<!--<a href="javascript:hideshow(document.getElementById('adiv'))">Click here</a>
+
+<script type="text/javascript">
+function hideshow(which){
+if (!document.getElementById)
+return
+if (which.style.display=="block")
+which.style.display="none"
+else
+which.style.display="block"
+}
+</script>
+
+<div id="adiv" style="font:24px bold; display: block">Now you see me</div>-->

@@ -1,0 +1,59 @@
+// *****************************************************************************
+// *****************************************************************************
+// TCPSocket (Object->Resource->TCPSocket)
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+// TCPSocket objects implement TCP Socket.
+// Concret classes are TCPSocketClient and TCPSocketServer
+
+1 const: TCPSocket.IPV4
+2 const: TCPSocket.IPV6
+3 const: TCPSocket.IPALL
+
+
+//******************************************************************************
+// Class definition
+//******************************************************************************
+// Resource Class new: TCPSocket(port)
+//    port is the local port attribued to the socket
+
+//******************************************************************************
+// port 
+//    Return socket local port
+TCPSocket method: port -- n
+   @port ;
+
+//******************************************************************************
+// close
+//    Close the socket
+//    If socket is already closed, do nothing.
+//    If the socket is garbaged without close, a close is performed.
+// Native primitiv
+
+//******************************************************************************
+// select(mode)
+//    Check if socket is ready for aMode
+//    mode is Resource.RECEIVE or Resource.SEND
+//    
+//    Return true if the socket est ready, false otherwise.
+//
+// Native method
+
+//******************************************************************************
+// <<
+//    Send a socket information to aStream
+TCPSocket virtual: << 
+  self class << '(' <<c self port << ')' <<c ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// End of Socket class
+//******************************************************************************
+

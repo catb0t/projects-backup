@@ -1,0 +1,49 @@
+// *****************************************************************************
+// *****************************************************************************
+// MemBuffer methods (Object->Collection->Buffer->MemBuffer)
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+
+// MemBuffer implements memory buffer with Read/Write access
+
+// *****************************************************************************
+// Class definition
+// *****************************************************************************
+// Buffer Class new: MemBuffer
+
+// *****************************************************************************
+// basicPut(n, c)
+//    Put aChar at aInteger position.
+//    MemBuffer are 1-based.
+//    If aChar is greater than 255, put (aChar rem 256) at aInteger position
+//    Throw exception if aInteger is greater than buffer size
+// Native Implement
+
+// *****************************************************************************
+// put(n, c)
+//    Put aChar at aInteger position.
+//    MemBuffer are 1-based.
+//    If aChar is greater than 255, put (aChar rem 256) at aInteger position
+//    Throw exception if aInteger is greater than buffer size
+MemBuffer method: put      // ( c n aMemBuffer -- )
+   self basicPut ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Tests
+// *****************************************************************************
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// End of MemBuffer class
+// *****************************************************************************
+

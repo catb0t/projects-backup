@@ -1,0 +1,112 @@
+for idx, tok in enumerate(toklist):
+
+    self.char += 1
+
+    # take the current line number, when in files.
+    # uses \n because it will (maybe?) also detect \r\n on Windows
+    if ord(tok) == 10:
+        self.line += 1
+        self.char =  1
+
+    # quotations have highest precedence
+    if self.in_quot == True:
+        if tok == "}":
+            self.in_quot = False
+            self._stack.push(self.quotstk)
+        else:
+            self.quotstk.append(tok)
+
+    # pushes charcode of token
+    elif self.nxt_ischr == True:
+            self._stack.push(ord(tok))
+            self.nxt_ischr = False
+
+    # string recording
+    elif self.in_str == True:
+        if tok == "\"":
+            if toklist[idx - 1] == "\\":
+                self.current_buf = self.current_buf[:-1]
+                self.current_buf += "\""
+            else:
+                self._stack.push("".join(self.current_buf))
+                self.in_str = False
+        else:
+            self.current_buf += tok
+
+    # *more* string recording.
+    elif tok == "\"":
+        self.in_str = True
+        # numbers
+              elif (
+                  tok in string.digits + "."
+                  and self.in_str  == False
+                  and self.in_quot == False
+              ):
+                  self.current_buf += tok
+                  try:
+                      toklist[idx + 1]
+                  except IndexError:
+                      try:
+                          if "." in self.current_buf:
+                              self.current_buf = float(self.current_buf)
+                          else:
+                              self.current_buf = int(self.current_buf)
+
+                          self._stack.push(self.current_buf)
+                          self.current_buf = ""
+                      except ValueError:
+                          self._stack.push(0.0)
+
+                  else:
+                      if toklist[idx + 1] not in string.digits + ".":
+                          try:
+                              if "." in self.current_buf:
+                                  self.current_buf = float(self.current_buf)
+                              else:
+                                  self.current_buf = int(self.current_buf)
+
+                              self._stack.push(self.current_buf)
+                              self.current_buf = ""
+                          except ValueError:
+                              self._stack.push(0.0)
+
+              # quotations
+              elif tok == "{":
+                  self.in_quot = True
+
+              # nxtchr is charcode to record
+              elif tok == "'":
+                  self.nxt_ischr = True
+                  try:
+                      toklist[idx + 1]
+                  except IndexError:
+                      self._stack.log(
+                          "found EOF before character for literal at char " +
+                          str(char + 1) + ", line " + str(line) +
+                          " : file " + filename, 2
+                      )
+
+              elif tok in self.funcdict:
+                  self.func, self.arg = self.funcdict.get(tok, nop)
+                  try:
+                      self.func(*self.arg)
+                  except ValueError as error:
+                      raise BadInternalCallException(
+                          "junk call found, possible bug") from error
+
+              else:
+                  nodeftupl = ("at char " + str(self.char) + ", line " + str(self.line) +
+                      ": ignoring token '" + tok +
+                      "' which needs a definition before it can be used")
+                  try:
+                      toklist[idx + 1]
+                  except:
+                      if tok == ":":
+                          pass
+                      else:
+                          self._stack.log(nodeftupl, 2)
+                  else:
+                      if toklist[idx + 1] == ":":
+                          pass
+                      else:
+                          self._stack.log(nodeftupl, 2)

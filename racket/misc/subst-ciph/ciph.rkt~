@@ -1,0 +1,6 @@
+#lang racket
+
+(define (zip . xs)
+  (apply map list xs))
+
+(define (key-table) ())

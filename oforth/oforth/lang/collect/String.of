@@ -1,0 +1,231 @@
+// *****************************************************************************
+// *****************************************************************************
+// String methods (Object->Collection->Buffer->String)
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+// *****************************************************************************
+// Class definition
+// *****************************************************************************
+// Buffer Class new: String
+
+
+// *****************************************************************************
+// isString
+//    Return true if aObject is a string
+Object virtual: isString -- b
+   false ;
+
+String method: isString -- b
+   true ;
+
+// *****************************************************************************
+// size
+//    Return number of UTF8 characters into the string
+String method: size -- n
+| i |
+   0 self basicSize loop: i 
+      [ i self basicAt between(0x80,0xBF) ifFalse: [ 1 + ] ] ;
+
+//******************************************************************************
+// at(aInteger)
+//    Return UTF8 char at aInteger position (1-based)
+//    Return null if aInteger is out of string range or if no UTF8 character 
+//    at aInteger position.
+String method: at(n) -- aChar
+| i c |
+   1 n loop: i [ dup self utf8At dup ->c ifNull: [ drop null return ] + 1 + ]
+   drop c ;
+
+//******************************************************************************
+// forEachNext
+//    Loop on a string
+String method: forEachNext
+   dup ifNull: [ drop 1 ] 
+   dup self basicSize <= ifFalse: [ drop false return ]
+   dup self utf8At tor + 1 + swap true ;
+
+//******************************************************************************
+// hash -- n
+//    Return an hash value of the receiver
+// Native method
+
+//******************************************************************************
+// perform 
+//    Perform string as oforth object.
+//    Oforth functions or methods are not permitted when perfroming a string
+//    Example : "[ [$aa, 1], [$bb, [1, 2]], [$cc, 3.2]" perform
+// Native method
+
+//******************************************************************************
+// eval 
+//    Perform string as oforth code.
+//    This method should be used only on safe strings
+// Native method
+
+//******************************************************************************
+// load
+//    Search file with name corresponding to the receiver and load it
+// Native method
+
+// *****************************************************************************
+// ==          ( s1 s2 -- b)
+//    Compare two string
+// Native method
+
+// *****************************************************************************
+// <=          ( s1 s2 -- b)
+//    Compare two string
+// Native method
+
+//******************************************************************************
+// extractAndStrip(from, to)
+//    Extract characters [from, to] from the receiver
+//    and remove leading and trailine whitespaces and controls
+String method: extractAndStrip(i, j) -- s 
+| c |
+   j while( dup self at dup ->c notNull) 
+      [ c isControl c isLwSpace or ifFalse: [ break ] 1 - ]
+
+   i while( dup self at dup ->c notNull)
+      [ c isControl c isLwSpace or ifFalse: [ break ] 1 + ]
+
+   self extract ;
+
+// *****************************************************************************
+// strip
+//    Remove leading and trailing whitespaces and controls from a string
+String method: strip -- s
+   self size 1 self extractAndStrip ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Strings conversion
+// *****************************************************************************
+
+// *****************************************************************************
+// asSymbol
+//    Return symbol corresponding to the receiver
+// Native method
+
+// *****************************************************************************
+// asIntegerOfBase(aBase)
+//    Return integer represented by aString into base aBase
+//    Return null if the string does not represent an integer
+String method: asIntegerOfBase(aBase) -- n
+| sign i c |
+
+   self isEmpty ifTrue: [ null return ]
+   1 ->sign
+
+   0 self size loop: i [
+      self at(i) ->c
+      i 1 == ifTrue: [
+         c '+' == ifTrue: [ continue ]
+         c '-' == ifTrue: [ -1 ->sign continue ]
+         ]
+      aBase * c asIntegerOfBase(aBase) dup ifNull: [ nip return ] +
+      ]
+   sign * ;
+
+// *****************************************************************************
+// asInteger
+//    Return integer represented by aString
+String method: asInteger -- n 
+   10 self asIntegerOfBase ;
+
+// *****************************************************************************
+// asFloat
+//    Return float represented by aString 
+//    Return null if the string does not represent a float
+//    If beginnning of the string represent a float, returns this float
+// Native method
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// String output
+// ****************************************************************************
+
+//*****************************************************************************
+// <<(aStream)          ( aStream aString -- aStream )
+//    This method allows to send the receiver to a stream
+String method: << 
+   self over addBufferFormat ;
+
+//*****************************************************************************
+// <<wj(w, j, aStream)  ( aStream justify width aString -- aStream )
+//    Send justified string to aStream
+String method: <<wj(w, j) 
+| l i | 
+   0 w self size - max ->l
+   j Stream.JUSTIFY_RIGHT == ifTrue: [ l loop: i [ ' ' <<c ] ]
+   self <<
+   j Stream.JUSTIFY_LEFT  == ifTrue: [ l loop: i [ ' ' <<c ] ] ;
+
+//*****************************************************************************
+// <<w(w, aStream)      ( aStream width aString -- aStream )
+//    Send justified string to aStream
+String method: <<w(w) 
+   self <<wj(w, Stream.JUSTIFY_LEFT) ;
+
+//*****************************************************************************
+// <<Json(aStream)
+//    Return Json for a string
+String virtual: <<Json 
+   '\"' <<c self << '\"' <<c ;
+
+//*****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ "abcde" size 5 == ]
+test: [ "abcde" "abcde" == ]
+test: [ "abbde" "abcdf" <= ]
+test: [ "abcde" "abcde" <= ]
+test: [ "abcde" "abcdd" <= not ]
+test: [ "abcd"  "abcde" <= ]
+
+test: [ "abcde" first 'a' == ]
+test: [ "abcde" last 'e' == ]
+test: [ "abcde" indexOf('c') 3 == ]
+
+test: [ "abade" count(#[ 'a' == ]) 2 == ]
+test: [ "abcde" detect(#isUpper, true) isNull ]
+test: [ "abcde" detect(#isUpper, false) 'a' == ]
+test: [ "abCde" detect(#isUpper, true) 'C' == ]
+test: [ "abcde" conform(#isLower) ]
+test: [ "abcdE" conform(#isLower) not ]
+
+test: [ "cd" isAllAt("abcde", 3) ]
+test: [ "abcde" indexOfAll("cd") 3 == ]
+test: [ "abcde" indexOfAll(['c', 'd']) 3 == ]
+
+test: [ "12" asInteger 12 == ]
+test: [ "-12" asInteger -12 == ]
+test: [ "a12" asInteger isNull ]
+
+test: [ "12" asFloat 12.0 == ]
+test: [ "-12e-1" asFloat -1.2 == ]
+test: [ "a12e-1" asFloat isNull ]
+
+
+test: ["[ [$aa, 1.2], [$bb, [1, 2]] ]" perform [[$aa, 1.2], [$bb, [1, 2]]] == ]
+test: ["[ [$cc, #first], [$dd, Pi] ]"  perform [[$cc, #first], [$dd, Pi]] == ]
+
+// ****************************************************************************
+
+
+// *****************************************************************************
+// End of String class
+// *****************************************************************************
+

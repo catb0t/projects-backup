@@ -1,0 +1,107 @@
+// ****************************************************************************
+// ****************************************************************************
+// Pair (Object->Collection->Pair)
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Pair implements a sequence of two objects.
+// Pairs are immutable
+// Pairs are 1-based (first element is at position 1).
+
+// ****************************************************************************
+// Collection Class new: Pair(first, second)
+
+// ****************************************************************************
+// Pair creation
+// ****************************************************************************
+
+// ****************************************************************************
+// initialize(first, second)
+//    Creates a new pair
+Pair method: initialize
+   := first := second ;
+
+// ****************************************************************************
+// first/second
+//    Return pair elements
+Pair method: first -- x 
+   @first ;
+
+Pair method: second -- x
+   @second ;
+
+// ****************************************************************************
+// size 
+//    Return the size of the pair
+Pair method: size -- n 
+   2 ;
+
+// ****************************************************************************
+// at(aInteger)
+//    Return element at position aInteger 
+//    Return null if none.
+Pair method: at(i) -- x
+   i 1 &= ifTrue: [ @first ]
+   else: [ i 2 &= ifTrue: [ @second ] else: [ null ] ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Pair operations
+// ****************************************************************************
+
+// ****************************************************************************
+// maxKey(aPair)
+//    Given two pairs, return the one which key is the greater
+Pair method: maxKey(aPair) -- aPair
+   self first aPair first > ifTrue: [ self ] else: [ aPair ] ;
+
+// ****************************************************************************
+// minKey(aPair)
+//    Given two pairs, return the one which key is the smaller
+Pair method: minKey(aPair) -- aPair
+   self first aPair first < ifTrue: [ self ] else: [ aPair ] ;
+
+// ****************************************************************************
+// maxValue(aPair) -- aPair
+//    Given two pairs, return the one which value is the greater
+Pair method: maxValue(aPair)
+   self second aPair second > ifTrue: [ self ] else: [ aPair ] ;
+
+// ****************************************************************************
+// minValue(aPair)
+//    Given two pairs, return the one which value is the /smaller
+Pair method: minValue(aPair) -- aPair
+   self second aPair second < ifTrue: [ self ] else: [ aPair ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Pairs are indexables
+Pair is: Indexable
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ Pair new(2.3, 4.5) first 2.3 == ]
+test: [ Pair new(2.3, 4.5) second 4.5 == ]
+test: [ Pair new(2.3, 4.5) at(1) 2.3 == ]
+test: [ Pair new(2.3, 4.5) at(2) 4.5 == ]
+test: [ Pair new(2.3, 4.5) at(3) null == ]
+test: [ Pair new(2.3, 4.5) size 2 == ]
+test: [ Pair new(2.3, 4.5) sum 6.8 == ]
+
+
+// ****************************************************************************
+// End of Pair class
+// ****************************************************************************
+

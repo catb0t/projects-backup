@@ -1,0 +1,198 @@
+// ****************************************************************************
+// ****************************************************************************
+// Exception classes (Object->Exception)
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Exception class is the base class for all exceptions
+
+// ****************************************************************************
+// Exception definition
+// ****************************************************************************
+// Object Class new: Exception(message)
+
+// ****************************************************************************
+// initialize(aObject) 
+//    Create a new exception with aObject as message 
+Exception virtual: initialize(aObject)
+   aObject := message ;
+
+// ****************************************************************************
+// throw             ( ex -- )
+//    Throw aException
+//    The nearest try block will catch it.
+//    If not, system will catch the exception.
+// Native method
+
+// ****************************************************************************
+// throw             ( ... Exception -- )
+//    Create a new exception of class aClass and throw it.
+//    According to the exception, parameters should be on the stack
+//    Example : ExRuntime throw("My exception", 12)
+Exception classMethod: throw 
+   self new throw ;
+
+// ****************************************************************************
+// message           ( ex -- x )
+//    Return exception message
+Exception method: message -- aObject
+   @message ;
+
+// ****************************************************************************
+// <<                ( aStream ex -- aStream )
+//    Put aException into aStream
+Exception virtual: << 
+   @message << ;
+
+// ****************************************************************************
+// log               ( ex -- )
+//    Log exception on std error
+Exception method: log 
+   System.Err self class << " : " << self << "\n" <- ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// ExRuntime definition
+// ****************************************************************************
+// Exception Class new: ExRuntime(object)
+
+// ****************************************************************************
+// object            ( ex -- x )
+//    Return object implied by exception
+ExRuntime method: object -- x
+   @object ;
+
+// ****************************************************************************
+// initialize(aMessage, aObject) --
+//    Initialize an ExRuntime
+ExRuntime virtual: initialize(aMessage, aObject) 
+   aMessage super initialize
+   aObject := object ;
+
+// ****************************************************************************
+// <<(aStream)       ( aStream ex -- aStream )
+//    Put exception on stream aStream
+ExRuntime virtual: << 
+   super << " <" << self object << "> " << ;
+
+// ****************************************************************************
+// doesnotUnderstand(m) --
+Object virtual: doesNotUnderstand(m) 
+| o |
+   self dup ifNull: [ drop "null" ] ->o
+   ExRuntime throw(o " does not understand method" + , m) ;
+
+// ****************************************************************************
+// subclassResponsability(aMethod) --
+//    Send exception : aMethod should be redefined into the object's class
+Object method: subclassResponsability(m) 
+   ExRuntime throw("Class should redefine method", m) ;
+
+Object classMethod: subclassResponsability(m) 
+   ExRuntime throw("Class should redefine class method ", m) ;
+
+// ****************************************************************************
+// shouldNotCall(aMethod) --
+//    Send an exception if an object should not call a method
+Object method: shouldNotCall(m) 
+   ExRuntime throw("Object should not call", m) ;
+
+Object classMethod: shouldNotCall(m) 
+   ExRuntime throw("Class should not call", m) ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// ExBadType definition
+// ****************************************************************************
+// ExRuntime Class new: ExBadType(value)
+
+// ****************************************************************************
+// initialize(aMessage, aObject, aValue) --
+//    Initialize an ExRuntime
+ExBadType virtual: initialize(aMessage, aObject, aValue) 
+   super initialize(aMessage)
+   aObject := object
+   aValue := value ;
+
+// ****************************************************************************
+// <<(aStream) -- aStream
+//    Put exception on stream aStream
+ExBadType virtual: << 
+   @object << " expected for " << @message << 
+   ", received (" << @value class << ") " << @value << ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// ExIO definition
+// ****************************************************************************
+// ExRuntime Class new: ExIO(error)
+
+// ****************************************************************************
+// intialize(aMessage, aObject, aInteger) --
+//    Create a new IO exception : aInteger is the error number or message
+ExIO virtual: initialize(aMessage, aObject, aError)
+   super initialize(aMessage, aObject)
+   aError := error ;
+
+// ****************************************************************************
+// <<                ( aStream aException -- aStream )
+//    Return message of a ExIO exception
+ExIO virtual: << 
+   super << " (err=" << @error << ")" << ;
+
+// ****************************************************************************
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+
+// Check exception throw/catch mecanisms
+test: [
+   : _testThrow Exception throw("An exception") ;
+
+   : _testCatch 
+   | e | 
+      try: e [ _testThrow false ] 
+      when:  [ e message "An exception" == ] ;
+
+   _testCatch 
+   ]
+
+// Check multi level exception
+test: [
+
+   : _multiLevelExcep // -- aInteger
+   | e f g |
+      try: e [ 
+         try: f [ 
+            try: g [ _testThrow ]
+            when: [ 1 + g throw ]
+            ] 
+         when:  [ 1 + f throw ] 
+         ]
+      when: [ 1 + e throw ] ;
+
+   : _testMultiLevelExcep
+   | e |
+      0 try: e [ _multiLevelExcep ] when: [ 1 + ] ;
+
+   _testMultiLevelExcep 4 == 
+]
+// ****************************************************************************
+
+
+
+// ****************************************************************************
+// End of Exception classes
+// ****************************************************************************
+

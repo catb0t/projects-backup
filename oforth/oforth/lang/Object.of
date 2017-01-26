@@ -1,0 +1,190 @@
+// ****************************************************************************
+// ****************************************************************************
+// Object class 
+// ****************************************************************************
+// ****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// ****************************************************************************
+
+// Object is the root of the class hierarchy.
+// All objects respond to method defined at Object level.
+
+// Shortcut to create a new constant
+: const: 
+   Constant new: ;
+
+// Bytes by cell
+System.CELLSIZE 8 * const: System.CELLBITS
+
+// ****************************************************************************
+// Object definition
+// ****************************************************************************
+// null Class new: Object
+
+// ****************************************************************************
+// new               ( aClass -- x )
+//    Create a new instance of the receiver
+//    Receiver is a class
+//    Attributes are initialized with null value
+//    Example : Object new -> aObject
+// Native classVirtual method
+
+// ****************************************************************************
+// class             ( x -- aClass )
+//    Return object class
+//    Example : 1 class -> Integer
+// Native method
+
+// ****************************************************************************
+// yourself          ( x -- x )
+//    Return the top of the stack
+//    Example : "aaaa" yourself --> "aaaa"
+: yourself ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Object output
+// ****************************************************************************
+
+// ****************************************************************************
+// <<(aStream) -- aStream
+//    Send a printable version of the receiver to a stream
+//    aStream is kept on the stack for following #<<
+//    Example : System out "abcd" << 12 << Object new << cr 
+Object virtual: << 
+   "a" << self class << ;
+
+Object method: <- 
+   self << drop ;
+
+// ****************************************************************************
+// <<n(n, aStream) -- aStream
+//    Send n times a printable version of objet to a stream
+//    aStream is kept on the stack for following #<<
+//    Example : System out 12 <<n(10) cr
+Object method: <<n(n) 
+   | i | n loop: i [ self << ] ;
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Stack manipulation
+//    For those functions, objets are not copied, only references are copied
+//    For instance, after #dup, the same object will appear twice on the stack
+// ****************************************************************************
+
+// ****************************************************************************
+// dup                  ( x - x x )
+//    Duplicate the top of the stack
+//    Example : "aaa" dup --> "aaa" "aaa"
+// Native function
+
+// ****************************************************************************
+// drop                 ( x -- )
+//    Remove the top of the stack
+//    Example : "aaa" 1.2 drop --> "aaa"
+// Native function
+
+// ****************************************************************************
+// swap                 ( x y -- y x )
+//    Exchange the two first elements of the stack
+//    Example : 1 2 swap --> 2 1
+// Native function
+
+// ****************************************************************************
+// over                 ( x y -- x y x )
+//    Push the second item on top of the stack
+//    Example : 3 4 over --> 3 4 3
+// Native function
+
+// ****************************************************************************
+// tuck                 ( x y -- y x y )
+//    Copy the top of stack behind the second element
+//    Example : 3 4 tuck --> 4 3 4
+// Native function
+
+// ****************************************************************************
+// rot                  ( x y z -- y z x )
+//    Rotate the 3 first elements of the stack
+//    Example : 4 1 2 3 --> 4 2 3 1
+// Native function
+
+// ****************************************************************************
+// tor                  ( x y z -- z x y )
+//    Rotate the 3 first elements of the stack in reverse order
+//    Example : 4 1 2 3 --> 4 3 1 2 
+// Native function
+
+// ****************************************************************************
+// pick(u) -- x
+//    Push element at aInteger position (1 based) on top of stack
+//    "aaa" "bbb" "ccc" 2 pick --> "aaa" "bbb" "ccc" "bbb"
+// Native function
+
+// ****************************************************************************
+// .depth               ( -- u )
+//    Push stack size on top of stack
+//    Example : "aaa" "bbb" .depth --> "aaa" "bbb" 2
+// Native function
+
+// ****************************************************************************
+// nip                  ( x y -- y )
+//    Remove the second element
+//    Example : 1 2 nip --> 2
+: nip    // x y -- y 
+   swap drop ;
+
+// ****************************************************************************
+// 2dup                 ( x y -- x y x y )
+//    Duplicate the 2 first elements on the stack
+//    Example : 1 2 dup2 -> 1 2 1 2
+: 2dup   // x y -- x y x y 
+   over over;
+
+// ****************************************************************************
+// #!                   ( -- )
+//    Same as #//, in order to perform scripts.
+#// alias: #!
+
+// ****************************************************************************
+// --                   ( -- )
+//    Comments
+#// alias: --
+
+// ****************************************************************************
+
+
+// ****************************************************************************
+// Tests
+// ****************************************************************************
+test: [ 10 yourself 10 &= ]
+test: [ Object Object &= ]
+
+test: [ 10 dup + 20 &= ]
+test: [ .depth 10 drop .depth 1 - &= ]
+test: [ 10 12 swap 10 &= drop 12 &= ]
+test: [ 10 12 over swap drop &= ]
+test: [ 10 12 tuck swap drop &= ]
+test: [ 10 11 12 rot nip nip 10 &= ]
+
+test: [
+   : testParam(e) { e 10 + }
+   testParam(20) 30 &= 
+   ]
+
+test: [
+   : testVar(e) -- n
+      | i | e ->i i 10 + ;
+
+   testVar(20) 30 &= 
+   ]
+
+// ****************************************************************************
+// End of Object class
+// ****************************************************************************
+

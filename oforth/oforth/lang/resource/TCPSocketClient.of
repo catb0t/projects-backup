@@ -1,0 +1,252 @@
+// *****************************************************************************
+// *****************************************************************************
+// TCPSocketClient (Object->Resource->TCPSocket->TCPSocketClient)
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+// TCPSocketClient allows socket connections. 
+// It is created  : 
+//    - Explicitly by client side when connecting to remote server
+//    - Return by #accept on a TCPSocketServer when a new connection arrives
+
+//******************************************************************************
+// Class definition
+//******************************************************************************
+// TCPSocket Class new: TCPSocketClient(host, remotePort)
+
+//******************************************************************************
+// initialize(aHost, aRemotePort)
+//    Create a new socket :
+//
+//       - aPort is reserved and should be set to null.
+//
+//       - aHost is a string corresponding to host. It can be either :
+//          . An IPV4 or IPV6 address.
+//          . A host name
+//
+//       - aRemotePort a string corresponding to port or service on server side.
+//
+TCPSocketClient method: initialize(aHost, aRemotePort)
+   super initialize
+   null  := port
+   aHost := host
+   aRemotePort := remotePort ;
+
+//******************************************************************************
+// remotePort
+//    Return remote port used for the connection.
+TCPSocketClient method: remotePort -- n 
+   @remotePort ;
+
+//******************************************************************************
+// host
+//    Return host 
+TCPSocketClient method: host -- s
+   @host ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Connect
+//******************************************************************************
+
+//******************************************************************************
+// connectMode(mode)
+//    Connect this socket.
+//
+//    mode is : 
+//       - TCPSocket.IPV4
+//       - TCPSocket.IPV6
+//       - TCPSocket.IPALL
+//
+//    Returns :
+//       - true if connection is ok
+//       - false otherwise and System lastError is set.
+//
+//    Errors : 
+//       - ESOCKHOST    : Cannot retrieve host address (getaddrinfo)
+//       - ESOCKOPT     : Connect was pending but can't check connect (getsockopt)
+//       - ESOCKCONNECT : Connection refused.
+//
+TCPSocketClient method: connectMode  // ( n aTcpSocketClient -- b )
+   self tcpSockConnect ;
+
+//******************************************************************************
+// connect
+//    Connect this socket.
+//    If hostName is set, try to connect on host using its name and port
+//    Othewise, connect according to ipadress and port.
+//
+//    This socket will try to connect either on IPV4 or IPV6.
+//
+//    Return values : 
+//       - true if connection is ok
+//       - false otherwise and System lastError is set.
+//
+//    Errors : 
+//       - ESOCKHOST    : Cannot retrieve host address (getaddrinfo)
+//       - ESOCKOPT     : Connect was pending but can't check connect (getsockopt)
+//       - ESOCKCONNECT : Connection refused.
+//
+TCPSocketClient method: connect -- b
+   TCPSocket.IPALL self connectMode ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Receive
+//******************************************************************************
+
+//******************************************************************************
+// receiveWithTimeout(aStringBuffer, ns, nt)
+//    Receive ns bytes from a remote socket and append bytes to aStringBuffer.
+//
+//    aStringBuffer will be appended with read bytes.
+//
+//    ns is number of bytes to read.
+//
+//    nt is timeout in microseconds. If null, no timeout (ie blocking call)
+//
+//    Return value : 
+//       - Return number of bytes really read on socket, which can be less
+//         than aSize.
+//       - If this number is 0, the remote peer has performed a shutdown.
+//       - Return null if timeout or error occured and System lastError is set
+//
+//    Errors : 
+//       - ETIMEOUT    : A timeout occured.
+//       - ESOCKREAD   : OS error while readind (read). Check System lastOSError
+//
+TCPSocketClient method: receiveWithTimeout // ( nt ns aStringBuf aTCPSok -- n )
+   self tcpSockReceiveTimeout ;
+
+//******************************************************************************
+// receiveWith(aStringBuffer, ns)
+//    Receive ns bytes from a remote socket and append to aStringBuffer
+//
+//    aStringBuffer will be appended with read bytes.
+//
+//    ns is number of bytes to read.
+//
+//    Return value : 
+//       - Return number of bytes really read on socket, which can be less
+//         than ns.
+//       - If this number is 0, the remote peer has performed a shutdown.
+//       - Return null if error occured and System lastError is set
+//
+//    Errors : 
+//       - ESOCKREAD   : OS error while readind (read). Check System lastOSError
+//
+TCPSocketClient method: receiveWith(s, n) -- n1
+   self receiveWithTimeout(s, n, null) ;
+
+//******************************************************************************
+// receiveTimeout(ns, nt)
+//    Receive ns bytes from a remote socket and return the corresponding string
+//
+//    ns is number of bytes to read.
+//
+//    nt is timeout in microseconds. If null, no timeout (ie blocking call)
+//
+//    Return value : 
+//       - Return number of bytes really read on socket, which can be less
+//         than ns.
+//       - If this number is 0, the remote peer has performed a shutdown.
+//       - Return null if timeout or error occured and System lastError is set
+//
+//    Errors : 
+//       - ETIMEOUT    : A timeout occured.
+//       - ESOCKREAD   : OS error while readind (read). Check System lastOSError
+//
+TCPSocketClient method: receiveTimeout(ns, nt) -- n
+| s |
+   StringBuffer newSize(ns) ->s
+   self receiveWithTimeout(s, ns, nt) 
+   dup ifNotNull: [ drop s freeze s ] ;
+
+//******************************************************************************
+// receive(n)
+//    Receive n bytes from a remote socket and return the corresponding string
+//
+//    n is number of bytes to read.
+//
+//    Return value : 
+//       - Return number of bytes really read on socket, which can be less
+//         than n.
+//       - If this number is 0, the remote peer has performed a shutdown.
+//       - Return null error occured and System lastError is set
+//
+//    Errors : 
+//       - ESOCKREAD   : OS error while readind (read). Check System lastOSError
+//
+TCPSocketClient method: receive(n) -- n1
+   null n self receiveTimeout ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Send
+//******************************************************************************
+
+//******************************************************************************
+// sendTimeout(aBuffer, n) -- b
+//    Send aBuffer to the socket.
+//
+//    n is timeout (microseconds) to wait before aborting call
+//       - If timeout is null, block until write is done
+//       - If timeout is set, return null if timeout occurs
+//
+//    Return value : 
+//       - true if the string has been written on the socket
+//       - false otherwize, and System lastError is set
+//
+//    Errors : 
+//       - ETIMEOUT    : A timeout occured.
+//       - ESOCKWRITE  : OS error while readind (read). Check System lastOSError
+//
+TCPSocketClient method: sendTimeout // (n aBuffer aTCPSock -- b )
+   self tcpSockSendTimeout ;
+
+//******************************************************************************
+// send(aBuffer) -- b
+//    Send aBuffer to the socket.
+//    The call will block until all the string has been sent.
+//
+//    Return value : 
+//       - true if the string has been written on the socket
+//       - false otherwise, and System lastError is set
+//
+//    Errors : 
+//       - ESOCKWRITE  : OS error while readind (read). Check System lastOSError
+//
+TCPSocketClient method: send(s) -- b
+   null s self sendTimeout ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Output
+//******************************************************************************
+
+//******************************************************************************
+// << 
+//    Send a socket client informations to aStream
+TCPSocketClient method: << 
+   super << " [" << self host << 
+   self remotePort ifNotNull: [ ':' <<c self remotePort << ] ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// End of TCPSocketClient class
+//******************************************************************************
+

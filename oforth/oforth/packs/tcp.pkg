@@ -1,0 +1,46 @@
+// *****************************************************************************
+// *****************************************************************************
+// TCP package
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+// Tcp package defines classes for a TCP Server
+
+// Thoses classes must be redefined to implement particular TCP protocol and
+// to perform TCP requests
+
+// Subclasses of TcpRequest must, at least, redefine #read in order to implement
+// the protocol used.
+
+// Subclasses of TcpServer must, at least, redefine #performRequest(aRequest)
+// to perform operations when a new request arrives.
+
+
+// ****************************************************************************
+// TCP package signature
+// ****************************************************************************
+[ 
+   [ $name, "tcp" ], 
+   [ $version, "V0.9.0" ],
+   [ $state, $NotStable ],
+   [ $directory, "tcp" ],
+   [ $dependencies, [ ] ],
+   [ $author, "Franck Bensusan" ],
+   [ $contributors, [ ] ],
+   [ $url, "www.oforth.com" ],
+   [ $license, "BSD" ]
+]
+
+// *****************************************************************************
+// TCP files
+// *****************************************************************************
+[ "TcpConnection.of", "TcpRequest.of", "TcpServer.of" ]
+
+// *****************************************************************************
+// End of TCP package
+// *****************************************************************************
+

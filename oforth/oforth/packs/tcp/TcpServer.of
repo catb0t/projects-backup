@@ -1,0 +1,346 @@
+// *****************************************************************************
+// *****************************************************************************
+// TcpServer class (Object->Emitter->TcpServer)
+// *****************************************************************************
+// *****************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+import: emitter
+import: logger
+
+// *****************************************************************************
+// This class implements a tcp server.
+// It is an abstract class for tcp and hhtp servers
+
+// Subclasses must redefine :
+//    - performRequest(aRequest, context) : Perform a request
+
+// Subclasses can redefine default behavior for :
+//    - logRequest(aRequest, ret)     : log a request into log file
+//    - checkSecurity(aSocket)        : check if aSocket is allowed to connect
+//    - forbiddenRequest(aRequets)    : What to do when a request failed security
+
+// Events added to tcp server emitter : 
+//    [ $connect, socket ]   : sent by connection listener when new connections
+
+Emitter Class new: TcpServer(socket, port, backLog, logFile, log, 
+                            listenMode, keepAliveDelay, bufferClass, bufferSize, 
+                            requestClass, ipAllowed)
+
+
+// *****************************************************************************
+// Handling errors
+// *****************************************************************************
+
+// *****************************************************************************
+// logWarning(aSocket, aString, aException)
+//    Log a warning for incoming connection
+TcpServer method: logWarning(sock, text, e)
+   StringBuffer newSize(512) sock << " : " << text << 
+   e ifNotNull: [ " : " << e << ] 
+   dup freeze
+   @log ifNotNull: [ @log logWarning ] ;
+
+// *****************************************************************************
+// forbiddenConnection(aSocket)
+//    Connection is forbidden according to #checkSecurity
+TcpServer virtual: forbiddenConnection(aSocket)
+   self logWarning(aSocket, " : Forbidden connection", null) ;
+
+// *****************************************************************************
+// internalErrorRequest(aRequest, e)
+//    Internal server error
+TcpServer virtual: internalErrorRequest(aRequest, e)
+   self logWarning(aRequest socket, " : Internal server error : ", e) ;
+
+// *****************************************************************************
+// bufferFull(aRequest)
+//    Request received is too big
+TcpServer virtual: bufferFull(aRequest)
+   self logWarning(aRequest socket, " : Received request is too big", null) ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Handling one connection
+// *****************************************************************************
+
+// *****************************************************************************
+// logRequest(aRequest, ret)
+//    Log request into current logger , if any
+TcpServer virtual: logRequest(aRequest, ret)
+   @log ifNotNull: [
+      StringBuffer newSize(512) System currentWorker <<w(4)
+      " : " << aRequest socket << " (" << aRequest elapsed << 
+      " microseconds) --> " << ret << 
+      dup freeze @log logInfo 
+      ] ;
+
+// *****************************************************************************
+// closedConnection(aRequest)
+//    Connection has been closed by peer
+//    Defaut is to do nothing
+TcpServer virtual: closedConnection(aRequest) ;
+
+// *****************************************************************************
+// timeoutConnection(aRequest)
+//    Timeout occured while reading data on socket
+//    Defaut is to log an info
+TcpServer virtual: timeoutConnection(aRequest) 
+   @log ifNotNull: [
+      StringBuffer newSize(512) System currentWorker <<w(4)
+      " : " << aRequest socket << " timeout occured" << 
+      dup freeze @log logInfo
+      ] ;
+
+// *****************************************************************************
+// checkSecurity(aSocket)
+//    Check ip security
+//    Return true if security ok, false otherwize
+TcpServer virtual: checkSecurity(aSocket) -- aBoolean
+   @ipAllowed isEmpty ifTrue: [ true return ]
+   @ipAllowed include(aSocket host) ;
+
+// *****************************************************************************
+// performRequest(aRequest, aContext)
+//    Must be redefined into subclasses
+//    Here, only log buffer received and return "Done" to the remonte client
+TcpServer virtual: performRequest(aRequest, aContext)
+| buf |
+   @log ifNotNull: [ 
+      aRequest buffer ->buf
+      StringBuffer newSize(512) System currentWorker <<w(4)
+      " : " << aRequest socket << " ---> " << buf left(buf size --) << 
+      dup freeze @log logInfo 
+      ]
+
+   aRequest socket send("Done") 
+      ifFalse: [ self logWarning("Can't send return : ", System lastOSError) ] ;
+
+// *****************************************************************************
+// handleConnection(aEvent)
+//    Handle one connection.
+//    A connection can perform multiple requests if keep alive is set
+TcpServer method: handleConnection(event, aContext)
+| sock conn request e f merr |
+
+   event second ->sock
+   self checkSecurity(sock) 
+      ifFalse: [ self forbiddenConnection(sock) sock close return ] 
+
+   // Create a new TcpConnection
+   TcpConnection new(sock, @keepAliveDelay) ->conn
+
+   // Loop in order to handle keep alive connections
+   doWhile: [
+
+      // Handle one request 
+      try: e [
+         // Create a new request and read it
+         try: f [ 
+            @requestClass new(conn, @bufferClass, @bufferSize) dup ->request 
+            readRequest 
+            ]
+         when:  [ self logWarning(sock, "Can't read request : ", f) break ]
+
+         // Check if protocol error on request after request is read
+         request error dup ->merr ifNotNull: [ 
+            self respondTo(merr) ifTrue: [ request self merr perform ]
+            else: [ self logWarning(request socket, "Unknow read error", null) ]
+            break
+            ]
+   
+         // Request is ok, perform it.
+         try: f [ self performRequest(request, aContext) ] 
+         when:  [ self internalErrorRequest(request, f) break ]
+         ]
+      when: [ self logWarning(sock, " : Aborted : ", e) break ]
+
+      // Request is performed, log it 
+      self logRequest(request, "OK")
+      clr 
+
+      // Loop on connection if keepAlive is asked
+      @keepAliveDelay 0 <>
+      ]
+
+   // No more requests on this connection, close socket and leave this task
+   sock close ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// Connections listener
+// *****************************************************************************
+
+// *****************************************************************************
+// handleNetworkConnections
+//    Handle incoming connections on server port.
+//    For each new connection, send an event to the server : [ $connect, socket ]
+//    This listener will stop when socket server is closed.
+TcpServer method: handleNetworkConnections
+| e sockClient |
+   
+   try: e [ 
+      while(true) [
+         null ->sockClient
+         @socket accept dup ->sockClient ifNull: [ break ]
+         self emit([$connect, sockClient])
+         ] 
+      ]
+   when: [ self logWarning(sockClient, "Connection listener stopped. Reason : ",e)] ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+// TCP Server
+// *****************************************************************************
+
+// *****************************************************************************
+// stop
+//    Shutdown httpserver
+TcpServer method: stop
+   super close
+   @socket close
+   @log ifNotNull: [ @log close ] ;
+
+// *****************************************************************************
+// tcpConf(aLine)
+//    Set a tcp option or parameter from string
+TcpServer method: TcpConf(s)
+| wrds cl |
+   true
+   s wordsWith('=') dup ->wrds size 2 <> ifTrue: [ not return ]
+   
+   wrds first "logFile" == ifTrue: [ wrds second := logFile return ]
+
+   wrds first "port"    == ifTrue: [ wrds second := port return ]
+   wrds first "backLog" == ifTrue: [ wrds second asInteger := backLog return ]
+
+   wrds first "listenIPVersion" == ifTrue: [
+      wrds second "IPV4"  == ifTrue: [ TCPSocket.IPV4  := listenMode ]
+      wrds second "IPV6"  == ifTrue: [ TCPSocket.IPV6  := listenMode ]
+      wrds second "IPALL" == ifFalse: [ not return ]
+      TCPSocket.IPALL := listenMode return
+      ]
+
+   wrds first "requestClass" == ifTrue: [ 
+      wrds second asClass dup ->cl ifNull: [ not return ]
+      cl isChildOf(TcpRequest) ifFalse: [ not return ]
+      cl := requestClass 
+      return 
+      ]
+
+   wrds first "bufferClass" == ifTrue: [
+      wrds second asClass ->cl
+      cl isChildOf(Buffer) ifFalse: [ not return ]
+      cl := bufferClass
+      return
+      ]
+
+   wrds first "bufferSize" == ifTrue: [ wrds second asInteger := bufferSize return ]
+
+   wrds first "keepAlive" == 
+      ifTrue: [ wrds second asInteger 1000 * := keepAliveDelay return ]
+
+   wrds first "ipAllowed" == ifTrue: 
+      [ wrds second wordsWith(',') := ipAllowed return ]
+
+   not ;
+
+// *****************************************************************************
+// keepAliveDelay
+//    Return keep alive delay to use for incoming connections.
+//    If 0, no keep alive.
+TcpServer method: keepAliveDelay -- aInteger 
+   @keepAliveDelay ;
+
+// *****************************************************************************
+// bufferClass
+//    Return buffer class to instanciate for request.
+TcpServer method: bufferClass -- aClass 
+   @bufferClass ;
+
+// *****************************************************************************
+// bufferSize
+//    Return buffer max size for request.
+TcpServer method: bufferSize -- aInteger 
+   @bufferSize ;
+
+// *****************************************************************************
+// confError(aLine)
+//    Log configuration error at line aInteger
+TcpServer method: confError(aLine)
+   System.Out "Server : Syntax error into conf file, line : " << aLine << cr ;
+
+// *****************************************************************************
+// readConfFile(aFileName)
+//    Read configuration file which name is aName
+TcpServer method: readConfFile(aName)
+| s l m val err sep |
+
+   false ->err
+   0 ->l
+   File new(aName) forEach: s [
+      s strip ->s 
+      l 1 + ->l 
+      s isEmpty ifTrue: [ continue ]
+      s left(2) "//" == ifTrue: [ continue ]
+      s left(8) "include:" == 
+         ifTrue: [ self readConfFile(s right(s size 8 -) strip) continue ]
+      s indexOf(BL) dup ->sep ==0 ifTrue: [ true ->err self confError(l) break ]
+      s left(sep 1 -) strip asMethod ->m
+      m ifNull: [ true ->err self confError(l) break ]
+      s right(s size sep - ) strip  ->val
+      self respondTo(m)    ifFalse: [ true -> err self confError(l) break ]
+      val self m perform ifFalse: [ true -> err self confError(l) 2 drop break ]
+      ] 
+   err ;
+
+// *****************************************************************************
+// initialize(aConfFileName)
+//    Initialize the tcp server
+//    aConf is name of the conf file use
+TcpServer virtual: initialize(aConfFileName)
+   7777 := port
+    100 := backLog
+   TcpRequest := requestClass
+   StringBuffer := bufferClass
+   65000 := bufferSize
+   TCPSocket.IPALL := listenMode
+   3000000 := keepAliveDelay
+
+   // Read configuration file to set server parameters
+   self readConfFile(aConfFileName) ifTrue: 
+      [ Exception throw("Server : Conf errors, server not started.") ]
+
+   // Initialize emitter on monitor scheduler
+   super initialize(null)
+
+   // Create a logger on the same scheduler than the emitter
+   @logFile isEmpty ifFalse: [ Logger new(@logFile) := log ]
+
+   // Each new connection will be handled by a new task, so #onEventParallel is used
+   self onEventParallel($connect, #handleConnection)
+
+   // Create sockect server that will listen on port 
+   TCPSocketServer newBackLog(@port, @backLog, @listenMode) := socket 
+
+   // Launch a new task that will listen for incoming connections
+   #[ self handleNetworkConnections ] & ;
+
+// *****************************************************************************
+
+
+// *****************************************************************************
+
+// *****************************************************************************
+// End of TcpServer class
+// *****************************************************************************
+

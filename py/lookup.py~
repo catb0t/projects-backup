@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+def T_lookup(obj, name):
+    "looking up the attribute"
+    return True if name in (*dir(obj), *(obj.__dict__.keys())) else False
+
+
+def T_catch_getattr(obj, name):
+    "using getattr and catching exceptions"
+    try:
+        return bool(getattr(obj, name)
+    except AttributeError:
+        return False
+
+
+def T_hasattr_native(obj, name):
+    "using hasattr alone"
+    return hasattr(obj, name)
+
+
+def T_abuse_exec(obj, name):
+    "abusing exec"
+    try:
+        exec("{}.{}".format(obj.__name__, name), globals(), locals())
+        return True
+    except AttributeError:
+        return False
+
+
+def T_abuse_eval(obj, name):
+    "abusing eval"
+    try:
+        eval("{}.{}".format(obj.__name__, name), globals(), locals())
+        return True
+    except AttributeError:
+        return False
+
+if __name__ == '__main__':
+
+    from timeit import timeit
+    from re import match, compile
+    prf = compile("^T_")
+
+    scope = globals().copy()
+
+    funcs = sorted(
+        [ scope[obj] for obj in scope if match(prf, obj) ],
+        key=lambda f: __import__("inspect").findsource(f)[1]
+    )
+
+    times = []
+
+    i = 0
+    while i < len(funcs):
+        func = funcs[i]
+        print("timing", func.__name__)
+        ftime = timeit(stmt='func(func, "asd")', setup="from __main__ import func", globals=locals())
+        times.append(ftime)
+        i += 1
+
+    i = 0
+    while i < len(times):
+        fname, time = funcs[i], times[i]
+        print("{} :: {}".format(fname.__name__, time))
+        i += 1
+
+    comb = list(dict(zip([func.__doc__ for func in funcs], [round(time, 3) for time in times])).items())
+
+    sc = list(sorted(comb, key=lambda f:f[1]))
+
+    from itertools import chain
+    print(str("{} ({}) is faster than " + ("{} ({}) which is faster than " * (len(sc) - 1))).format(*list(chain(*sc))) + "junk")

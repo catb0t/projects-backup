@@ -1,0 +1,187 @@
+cat @ mint-kitty : ~ $ cd projects/docs
+
+cat @ mint-kitty : ~/projects/docs $ mkdir -p Earth/{Land,Water}; cd Earth
+
+cat @ mint-kitty : ~/projects/docs/Earth $ mkdir -p Land/{Continents,Deserts,Mountains}; mkdir -p Water/{Oceans,Lakes
+,Rivers}
+
+cat @ mint-kitty : ~/projects/docs/Earth $ for dir in *; do touch $dir/$dir{-sorted,}.txt; done
+
+cat @ mint-kitty : ~/projects/docs/Earth $ for dir in *; do rm $dir/$dir{-sorted,}.txt; done
+really rm Land/Land-sorted.txt Land/Land.txt@ ???? say yes -> yes
+removed 'Land/Land-sorted.txt'
+removed 'Land/Land.txt'
+really rm Water/Water-sorted.txt Water/Water.txt@ ???? say yes -> yes
+removed 'Water/Water-sorted.txt'
+removed 'Water/Water.txt'
+
+cat @ mint-kitty : ~/projects/docs/Earth $ for updir in *; do (cd $updir; for dir in *; do touch $dir/$dir{-sorted,}.
+txt; done; cd ..) done;
+
+cat @ mint-kitty : ~/projects/docs/Earth $ \ls -R
+.:
+Land  Water
+
+./Land:
+Continents  Deserts  Mountains
+
+./Land/Continents:
+Continents-sorted.txt  Continents.txt
+
+./Land/Deserts:
+Deserts-sorted.txt  Deserts.txt
+
+./Land/Mountains:
+Mountains-sorted.txt  Mountains.txt
+
+./Water:
+Lakes  Oceans  Rivers
+
+./Water/Lakes:
+Lakes-sorted.txt  Lakes.txt
+
+./Water/Oceans:
+Oceans-sorted.txt  Oceans.txt
+
+./Water/Rivers:
+Rivers-sorted.txt  Rivers.txt
+
+cat @ mint-kitty : ~/projects/docs/Earth $ for updir in *; do (cd $updir; for dir in *; do (cd $dir; for file in *; d
+o echo "WRITING FILE:: $file"; cat > $file; done); done); done
+WRITING FILE:: Continents-sorted.txt
+^C
+
+130 | cat @ mint-kitty : ~/projects/docs/Earth $ for updir in *; do (cd $updir; ^Cr dir in *; do (cd $dir; for file i
+n *; do echo "WRITING FILE:: $file"; cat > $file; done); done); done
+
+127 | cat @ mint-kitty : ~/projects/docs/Earth $ find . -iname *-sorted.txt -exec rm {} +
+
+cat @ mint-kitty : ~/projects/docs/Earth $ find . -iname *-sorted.txt -exec echo {} +
+
+cat @ mint-kitty : ~/projects/docs/Earth $ for updir in *; do (cd $updir; for dir in *; do (cd $dir; for file in *; d
+o echo "WRITING FILE:: $file"; cat > $file; done); done); done
+WRITING FILE:: Continents.txt
+North America
+South America
+Eurasia
+Africa
+Antartica
+Australia
+WRITING FILE:: Deserts.txt
+Sahara
+Arabian
+Arctic
+Gobi
+Kalahari
+WRITING FILE:: Mountains.txt
+Himalayas
+Hindu Kush Mountains
+Tian Shan
+Andes Mountains
+Atlas Mountains
+Mount Kilimanjaro
+Appalachians
+Sierra Nevada
+WRITING FILE:: Lakes.txt
+Lake Michigan
+Lake Victoria
+Lake Titicaca
+Lake Superior
+Caspian Sea
+WRITING FILE:: Oceans.txt
+Southern
+Pacific
+Arctic
+Indian
+Atlantic
+WRITING FILE:: Rivers.txt
+Nile
+Amazon
+Yangtze
+Mississippi
+Congo
+Mekona
+Euphrates
+Yukon
+
+cat @ mint-kitty : ~/projects/docs/Earth $ sed -r Land/Continents/Continents.txt ^C
+
+1 | cat @ mint-kitty : ~/projects/docs/Earth $ sed -re 's/Antartica/Antarctica/' Land/Continents/Continents.txt
+North America
+South America
+Eurasia
+Africa
+Antarctica
+Australia
+
+2 | cat @ mint-kitty : ~/projects/docs/Earth $ cat Land/Continents/Continents.txt
+North America
+South America
+Eurasia
+Africa
+Antartica
+Australia
+
+cat @ mint-kitty : ~/projects/docs/Earth $ sed -ire 's/Antartica/Antarctica/' Land/Continents/Continents.txt
+
+cat @ mint-kitty : ~/projects/docs/Earth $ cat Land/Continents/Continents.txt
+North America
+South America
+Eurasia
+Africa
+Antarctica
+Australia
+
+cat @ mint-kitty : ~/projects/docs/Earth $ for updir in *; do (cd $updir; for dir in *; do (cd $dir; for file in *; d
+o echo "FILE:: $file"; sort $file | tee "$file-sorted.txt"; done); done); done
+FILE:: Continents.txt
+Africa
+Antarctica
+Australia
+Eurasia
+North America
+South America
+FILE:: Continents.txtre
+Africa
+Antartica
+Australia
+Eurasia
+North America
+South America
+FILE:: Deserts.txt
+Arabian
+Arctic
+Gobi
+Kalahari
+Sahara
+FILE:: Mountains.txt
+Andes Mountains
+Appalachians
+Atlas Mountains
+Himalayas
+Hindu Kush Mountains
+Mount Kilimanjaro
+Sierra Nevada
+Tian Shan
+FILE:: Lakes.txt
+Caspian Sea
+Lake Michigan
+Lake Superior
+Lake Titicaca
+Lake Victoria
+FILE:: Oceans.txt
+Arctic
+Atlantic
+Indian
+Pacific
+Southern
+FILE:: Rivers.txt
+Amazon
+Congo
+Euphrates
+Mekona
+Mississippi
+Nile
+Yangtze
+Yukon
+

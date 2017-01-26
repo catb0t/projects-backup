@@ -1,0 +1,311 @@
+//******************************************************************************
+//******************************************************************************
+// File (Object->File)
+//******************************************************************************
+//******************************************************************************
+// Copyright (c) 2014, 2015 Franck Bensusan. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found 
+// in the LICENSE.TXT file.
+// *****************************************************************************
+
+//******************************************************************************
+// Class definition
+//******************************************************************************
+// Object Class new: File(name, mode)
+
+// Mode
+0 Constant new: File.BINARY
+1 Constant new: File.TEXT
+2 Constant new: File.UTF8
+
+// Open access
+0 Constant new: File.READ
+1 Constant new: File.WRITE
+2 Constant new: File.APPEND
+
+// File positions
+0 Constant new: File.BEGIN
+1 Constant new: File.CURRENT
+2 Constant new: File.END
+
+//******************************************************************************
+// initialize(aString, aMode)
+//    Initialize a new file with :
+//       - aString as name 
+//       - aMode : File.BINARY, File.TEXT or File.UTF8
+File method: initialize(aName, aMode) 
+   aName dup checkType(String, "file name") := name
+   aMode dup checkType(Integer, "mode") := mode ;
+
+//******************************************************************************
+// newMode(name, mode)
+//    Create a new file with aString as name and aMode as mode
+//    - aString is the file name
+//    - aMode is File.BINARY, File.TEXT or File.UTF8
+File classMethod: newMode  // mode name -- aFile
+   super new ;
+
+//******************************************************************************
+// new(name)
+//    Create a new file with aString as name and UTF8 as default mode
+File classMethod: new(name) -- aFile
+   File.UTF8 name self newMode ;
+
+//******************************************************************************
+// name
+//    Return file name
+File method: name -- s
+   @name ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// File operations
+//******************************************************************************
+
+//******************************************************************************
+// open(aAccess) 
+//    Open text file with access aAccess : 
+//       File.READ
+//       File.WRITE
+//       File.APPEND
+//    Throw ExIO if error
+// Native method
+
+//******************************************************************************
+// isOpen
+//    Return true if the receiver is open
+// Native method
+
+//******************************************************************************
+// stats 
+//    Retrieve file statistiques :
+//    This method does not require to open the file before.
+//    If file exist, it returns a Tuple : [ size, created, modified ]
+//       - size is the file size
+//       - modified is number of microseconds since 1970/01/01 for file update
+//       - created is number of microseconds since 1970/01/01 for file creation
+// 
+//    Return null if file does not exist.
+File method: stats -- [ modified, created, size ]
+   self statsFile ifTrue: [ [ , , ] ] else: [ null ] ;
+
+//******************************************************************************
+// exists
+//    Return true if file exists and is available by user
+//    Return false otherwise
+File method: exists -- n
+   self stats notNull ;
+
+//******************************************************************************
+// size
+//    Return file size as integer
+//    If file doesnt exist or is not accessible return null
+File method: size -- n 
+   self stats dup ifNotNull: [ at(3) ] ;
+
+//******************************************************************************
+// created 
+//    Return timestamp of file creation
+//    If file doesnt exist or is not accessible return null
+File method: created -- n 
+   self stats dup ifNotNull: [ at(2) ] ;
+
+//******************************************************************************
+// modified 
+//    Return timestamp of last modification
+//    If file doesnt exist or is not accessible return null
+File method: modified -- n
+   self stats dup ifNotNull: [ at(1) ] ;
+
+//******************************************************************************
+// position -- n
+//    Return file current position 
+// Native method
+
+//******************************************************************************
+// setPosition(origin, offset)
+//    Set file position to origin + offset
+//
+//    origin is either : 
+//       - File.BEGIN   : Beginning of the file
+//       - FIle.CURRENT : File current position
+//       - File.END     : End of the file.
+//
+//    offset is the integer to add to the origin to define the new position
+//    If the file is open with File.TEXT mode, offset can only be 0 or
+//    a position returned by #position method.
+// Native method
+
+//******************************************************************************
+// atEnd -- b
+//    Return true if the end of the file is reached
+// Native method
+
+//******************************************************************************
+// close
+//    Close an open file.
+//    If aFile is already closed, do nothing
+// Native method
+
+//******************************************************************************
+// <<
+//    Output for files
+File method: << 
+   @name << self isOpen ifTrue: [ " (Open)" ] else: [ " (Closed)" ] << ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Reading bytes
+//******************************************************************************
+
+//******************************************************************************
+// readBytesWith(aSize, aMemBuffer)
+//    Read aSize characters from a file, and populate aMemBuffer.
+//
+//    If aMemBuffer is null, a new MemBuffer is allocated.
+//    If aMemBuffer is not null, old values are lost.
+//
+//    Number of bytes actually read can be less than aSize if end of file is 
+//    reached.
+// 
+//    Returns the populated buffer. The buffer size is the number of bytes
+//    actually read into the file.
+//
+//    Throw ExIO if an error occured while reading
+// Native method
+
+//******************************************************************************
+// readStruct(aStruct)
+//    Creates a new structure and populate it with next bytes of the receiver
+File method: readStruct(aStruct) -- aStructure
+   self readBytesWith(aStruct sizeof, aStruct new) ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Reading UTF8 chars
+//******************************************************************************
+
+//******************************************************************************
+// >> 
+//    Get and return next char from an open file
+//    If mode is UFT8, returns next unicode code
+//    Return null if end of file
+//    Throw ExIO if error
+// Native method
+
+//******************************************************************************
+// readCharsWith(n, aStringBuffer)
+//    Reads n UTF8 characters from the receiver and append them to aStringBuffer
+//    If the file is not open with File.UTF8 mode, an exception is raised.
+//    Returns the stringBuffer.
+File method: readCharsWith(n, s)
+| i |
+   @mode File.UTF8 <> ifTrue: 
+      [ Exception throw("Can't read characters from non UTF8 file") ]
+
+   s ifNull: [ StringBuffer newSize(n) ->s ]
+   n loop: i [ self >> dup ifNull: [ drop break ] s addChar ] s ;
+
+//******************************************************************************
+// readChars(n)
+//    Reads n UTF8 characters from the receiver.
+//    If the file is not open with File.UTF8 mode, an exception is raised.
+//    If the file does not hold UFT8 encoded chars, throw an exception.
+//    Returns the string read.
+File method: readChars(n) 
+   self readCharsWith(n, null) dup freeze ;
+
+//******************************************************************************
+
+
+//******************************************************************************
+// Reading lines
+//******************************************************************************
+
+//******************************************************************************
+// readLineWith(aBuffer)
+//    Read a line from the receiver, without CR, and populate aBuffer
+//    aBuffer must be is either : 
+//       - aStringBuffer if the file is open with File.UTF8 mode
+//       - aMemBuffer otherwize.
+//       
+//    If aBuffer is null, a new buffer is created
+//    Return the buffer or null if end of file.
+//    Throw ExIO if error
+// Native method
+
+//******************************************************************************
+// readLine -- s
+//    Read and return a line from the receiver, without CR
+//    Return null if end of file.
+//    Throw ExIO if error.
+File method: readLine -- s
+   self readLineWith(null) dup ifNotNull: [ dup freeze ] ;
+
+// ******************************************************************************
+// forEachNext
+//    Traverse each line of a file
+//    Open the file if not already open
+File method: forEachNext
+   ifNull: [ self isOpen ifFalse: [ self open(File.READ) ] ]
+   self atEnd ifTrue: [ self close false return ]
+   1 self readLine dup ifNull: [ drop drop self close false return ]
+   true ;
+
+// *****************************************************************************
+// forEachPrev
+//    A file cannot use this method
+File method: forEachPrev 
+   #forEachPrev self shouldNotCall ;
+
+// *****************************************************************************
+
+
+//******************************************************************************
+// Writing 
+//******************************************************************************
+
+//******************************************************************************
+// addChar(c)
+//    Add aChar to a file.
+//    If file is open with File.UTF8 mode, aInteger is used as unicode code
+//    and translated into UTF8 sequence. If aInteger is not a valid unicode code
+//    send an exception.
+//
+//    Send ExIO if error.
+// Native method
+
+//******************************************************************************
+// addBufferFormat(aBuffer)
+//    Send aBuffer to a file.
+//    If the file has been open using File.UTF8 mode, only strings can be
+//    sent to the file.
+//
+//    Send ExIO if error.
+// Native method
+
+//******************************************************************************
+// addIntegerFormat(n, width, justify, precision, base)
+//    Send formatted n integer to the receiver
+//    Send ExIO if error.
+// Native method
+
+//******************************************************************************
+// addFloatFormat(f, width, justify, precision)
+//    Send formatted float f to the receiver
+//    Send ExIO if error.
+// Native method
+
+//******************************************************************************
+
+
+//******************************************************************************
+// End of File class
+//******************************************************************************
+

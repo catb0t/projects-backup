@@ -1,0 +1,27 @@
+<transform xmlns="http://www.w3.org/1999/XSL/Transform" version="1.0">
+    <output method="text"/>
+    <param name="i"/>
+    <template match="/">
+        <variable name="d">
+            <variable name="s">0<if test="0&gt;$i">1</if></variable>
+            <variable name="d">
+                <call-template name="d">
+                    <with-param name="i" select="substring($i,$s+2)"/>
+                </call-template>
+            </variable>
+            <value-of select="substring($i,1,$s+1)+$d"/>
+        </variable>
+        <value-of select="$i+string-length($i)+$d"/>
+    </template>
+    <template name="d">
+        <param name="i"/>0<if test="$i!=''">
+            <variable name="d">
+                <call-template name="d">
+                    <with-param name="i" select="substring($i,2)"/>
+                </call-template>
+            </variable>
+            <value-of select="substring($i,1,1)+$d"/>
+        </if>
+    </template>
+</transform>
+
